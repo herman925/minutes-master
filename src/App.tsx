@@ -37,7 +37,7 @@ function App() {
   const [sampleMinutes, setSampleMinutes] = useKV<SampleMinute[]>('sample-minutes', [])
   const [darkMode, setDarkMode] = useKV<boolean>('dark-mode', false)
   const [meetingHistory, setMeetingHistory] = useKV<GeneratedMinutes[]>('meeting-history', [])
-  const [hasCompletedWizard, setHasCompletedWizard] = useState(false)
+  const [hasCompletedWizard, setHasCompletedWizard] = useKV<boolean>('has-completed-wizard', false)
   const [transcript, setTranscript] = useState('')
   const [generatedMinutes, setGeneratedMinutes] = useState<GeneratedMinutes | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
