@@ -223,29 +223,7 @@
     @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   }
   
-  /* Custom scrollbar - Theme-aware */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: var(--muted-foreground) var(--muted);
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: var(--muted);
-    border-radius: 3px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--muted-foreground);
-    border-radius: 3px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
-  }
+
   
   /* Workspace-specific styles - Match HTML structure exactly */
   .main-grid {
@@ -259,9 +237,30 @@
   }
   
   .panel {
-    @apply bg-card overflow-y-auto custom-scrollbar;
+    @apply bg-card overflow-y-auto;
     padding: 1.5rem;
     height: calc(100vh - 8rem); /* Adjust based on header/footer height */
+    /* Custom scrollbar styles */
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) var(--muted);
+  }
+  
+  .panel::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .panel::-webkit-scrollbar-track {
+    background: var(--muted);
+    border-radius: 3px;
+  }
+  
+  .panel::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 3px;
+  }
+  
+  .panel::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
   }
   
   .panel-header {
