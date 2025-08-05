@@ -554,7 +554,7 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
                 </Button>
               )}
             </div>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   )
