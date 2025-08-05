@@ -1,21 +1,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { 
-  FileText, 
-  Settings, 
-  Sparkles, 
-  Menu,
-  Sun,
-  Moon,
-  X,
-  PlusCircle
-} from '@phosphor-icons/react'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { Settings, Sparkles, Sun, Moon } from '@phosphor-icons/react'
+import MinutesHistory from './MinutesHistory'
+import ApiManager from './ApiManager'
+import type { GeneratedMinutes } from '@/types'
 
 interface DictionaryEntry {
   id: string
@@ -30,20 +20,6 @@ interface UserInstruction {
   category: string
   instruction: string
   priority: 'low' | 'medium' | 'high'
-}
-
-interface GeneratedMinutes {
-  title: string
-  date: string
-  attendees: string[]
-  agenda: string[]
-  keyDecisions: string[]
-  actionItems: Array<{
-    task: string
-    assignee: string
-    dueDate: string
-  }>
-  nextSteps: string[]
 }
 
 interface SampleMinute {
@@ -73,6 +49,7 @@ interface WorkspaceLayoutProps {
   onResetToWizard: () => void
   darkMode: boolean
   onToggleDarkMode: () => void
+  meetingHistory: GeneratedMinutes[]
 }
 
 export default function WorkspaceLayout({
@@ -90,7 +67,8 @@ export default function WorkspaceLayout({
   onExport,
   onResetToWizard,
   darkMode,
-  onToggleDarkMode
+  onToggleDarkMode,
+  meetingHistory
 }: WorkspaceLayoutProps) {
   const [activeTab, setActiveTab] = useState('dictionary')
 
@@ -131,44 +109,7 @@ export default function WorkspaceLayout({
         {/* Header */}
         <header className="header bg-card border-b border-border flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-2">
-                  <Menu className="text-muted-foreground" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-80">
-                <SheetHeader>
-                  <SheetTitle className="text-base font-semibold text-muted-foreground uppercase">Recent Meetings</SheetTitle>
-                </SheetHeader>
-                <div className="py-4">
-                  <Button onClick={onResetToWizard} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-3 rounded-md text-sm font-semibold flex items-center gap-2 mb-4">
-                    <PlusCircle className="w-5 h-5" />
-                    New Meeting
-                  </Button>
-                  <ul className="space-y-2 font-medium">
-                    <li>
-                      <a href="#" className="flex items-center p-2 text-foreground rounded-lg bg-secondary hover:bg-accent group">
-                        <FileText className="mr-3" />
-                        <span>Q3 Planning Meeting</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="flex items-center p-2 text-foreground rounded-lg hover:bg-accent group">
-                        <FileText className="mr-3" />
-                        <span>Project Phoenix Kick-off</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="flex items-center p-2 text-foreground rounded-lg hover:bg-accent group">
-                        <FileText className="mr-3" />
-                        <span>Marketing Weekly Sync</span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </SheetContent>
-            </Sheet>
+            <MinutesHistory meetings={meetingHistory} onNewMeeting={onResetToWizard} />
             <h1 className="text-lg font-semibold">{generatedMinutes?.title || 'Q3 Planning Meeting'}</h1>
           </div>
           <div className="flex items-center gap-4">
@@ -193,39 +134,8 @@ export default function WorkspaceLayout({
                   <Settings className="text-muted-foreground" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-semibold">Application Settings</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="api-key" className="block mb-2 text-sm font-medium">OpenRouter API Key</Label>
-                    <Input 
-                      type="password" 
-                      id="api-key" 
-                      defaultValue="sk-or-xxxxxxxxxx" 
-                      className="bg-secondary border border-border"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cost-limit" className="block mb-2 text-sm font-medium">Monthly Cost Limit ($)</Label>
-                    <Input 
-                      type="number" 
-                      id="cost-limit" 
-                      defaultValue="20" 
-                      className="bg-secondary border border-border"
-                    />
-                  </div>
-                  <hr className="border-border"/>
-                  <div className="flex items-center space-x-2">
-                    <Switch id="auto-save" defaultChecked />
-                    <Label htmlFor="auto-save" className="text-sm font-medium">Auto-save work in progress</Label>
-                  </div>
-                </div>
-                <div className="flex items-center pt-4 border-t border-border">
-                  <Button className="bg-primary hover:bg-primary/90">Save Changes</Button>
-                  <Button variant="outline" className="ml-3">Cancel</Button>
-                </div>
+              <DialogContent className="max-w-3xl">
+                <ApiManager />
               </DialogContent>
             </Dialog>
           </div>

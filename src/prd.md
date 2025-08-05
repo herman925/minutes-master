@@ -287,7 +287,7 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 ### Two-Stage Application Flow
 
 #### Stage 1: Setup Wizard (New Projects)
-**Purpose**: Guide users through initial setup with progressive disclosure
+**Purpose**: Guide users through initial setup with progressive disclosure. The wizard is the default screen on every refresh, ensuring configuration steps are completed before entering the workspace.
 **Layout**: Centered modal-style interface with step navigation
 
 1. **Step 1: Transcript Upload**
@@ -329,6 +329,7 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 - **Center Panel**: Generated minutes with rich text editing
 - **Right Panel**: Tabbed customization tools (Dictionary/Instructions)
 - **Header/Footer**: Project context and generation controls
+- **Header Icons**: Hamburger button opens meeting history sidebar; settings gear reveals full API configuration dialog
 
 ### Interface Transitions
 - **Smooth animations**: 300ms duration with easing for professional feel
@@ -352,6 +353,7 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 - **Sample Minutes**: Template storage for style consistency
 - **API Configuration**: Encrypted storage of API keys and settings
 - **Usage Statistics**: Tracking for API usage and cost monitoring
+- **Meeting History**: Retain generated minutes metadata for quick access via the sidebar
 
 ### Performance Considerations
 - **Async Processing**: Non-blocking AI generation with progress indicators
