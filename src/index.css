@@ -8,7 +8,7 @@
 }
 
 :root {
-  /* Modern, clean color palette optimized for professional workspaces */
+  /* Light mode - Modern, clean color palette optimized for professional workspaces */
   --background: oklch(0.98 0.01 110);
   --foreground: oklch(0.15 0.02 110);
   
@@ -58,12 +58,12 @@
   /* Typography */
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Merriweather', serif;
-  --font-mono: 'Geist Mono', monospace;
+  --font-mono: 'JetBrains Mono', monospace;
   
   /* Professional radius */
   --radius: 0.5rem;
   
-  /* Enhanced shadow system */
+  /* Enhanced shadow system - Light mode */
   --shadow-2xs: 0 1px 2px 0px hsl(240 5% 48% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(240 5% 48% / 0.1), 0 1px 2px 0px hsl(240 5% 48% / 0.06);
   --shadow-sm: 0 2px 4px 0px hsl(240 5% 48% / 0.1), 0 2px 2px -1px hsl(240 5% 48% / 0.06);
@@ -75,6 +75,65 @@
   
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+}
+
+.dark {
+  /* Dark mode - Rich, professional dark palette */
+  --background: oklch(0.10 0 0);
+  --foreground: oklch(0.95 0 0);
+  
+  --card: oklch(0.12 0 0);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.08 0 0);
+  --popover-foreground: oklch(0.95 0 0);
+  
+  /* Bright primary for contrast in dark mode */
+  --primary: oklch(0.85 0 0);
+  --primary-foreground: oklch(0.10 0 0);
+  --secondary: oklch(0.20 0 0);
+  --secondary-foreground: oklch(0.90 0 0);
+  --muted: oklch(0.20 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+  
+  /* Muted accent for dark mode */
+  --accent: oklch(0.3 0 0);
+  --accent-foreground: oklch(0.95 0 0);
+  
+  /* Destructive stays consistent */
+  --destructive: oklch(0.5770 0.2450 27.3250);
+  --destructive-foreground: oklch(1 0 0);
+  
+  /* Dark borders and inputs */
+  --border: oklch(0.20 0 0);
+  --input: oklch(0.20 0 0);
+  --ring: oklch(0.85 0 0);
+  
+  /* Chart colors - adjusted for dark mode */
+  --chart-1: oklch(0.8100 0.1000 252);
+  --chart-2: oklch(0.6200 0.1900 260);
+  --chart-3: oklch(0.5500 0.2200 263);
+  --chart-4: oklch(0.4900 0.2200 264);
+  --chart-5: oklch(0.4200 0.1800 266);
+  
+  /* Dark sidebar */
+  --sidebar: oklch(0.12 0 0);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.85 0 0);
+  --sidebar-primary-foreground: oklch(0.10 0 0);
+  --sidebar-accent: oklch(0.3 0 0);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.20 0 0);
+  --sidebar-ring: oklch(0.85 0 0);
+  
+  /* Enhanced shadow system - Dark mode (more subtle) */
+  --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px 0px hsl(0 0% 0% / 0.06);
+  --shadow-sm: 0 2px 4px 0px hsl(0 0% 0% / 0.1), 0 2px 2px -1px hsl(0 0% 0% / 0.06);
+  --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.06);
+  --shadow-md: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -2px hsl(0 0% 0% / 0.05);
+  --shadow-lg: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 10px 10px -5px hsl(0 0% 0% / 0.04);
+  --shadow-xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
+  --shadow-2xl: 0 35px 60px -15px hsl(0 0% 0% / 0.3);
 }
 
 @theme {
@@ -164,10 +223,10 @@
     @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   }
   
-  /* Custom scrollbar */
+  /* Custom scrollbar - Theme-aware */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: oklch(0.35 0.12 240) oklch(0.96 0.01 240);
+    scrollbar-color: var(--muted-foreground) var(--muted);
   }
   
   .custom-scrollbar::-webkit-scrollbar {
@@ -175,16 +234,61 @@
   }
   
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: oklch(0.96 0.01 240);
+    background: var(--muted);
     border-radius: 3px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: oklch(0.35 0.12 240);
+    background: var(--muted-foreground);
     border-radius: 3px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.30 0.12 240);
+    background: var(--accent);
+  }
+  
+  /* Workspace-specific styles */
+  .workspace-grid {
+    @apply grid h-screen gap-px bg-border;
+    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+  
+  .workspace-panel {
+    @apply bg-card p-6 overflow-y-auto custom-scrollbar;
+  }
+  
+  .workspace-header {
+    @apply bg-card border-b border-border flex items-center justify-between px-6 py-3;
+    grid-column: 1 / 4;
+  }
+  
+  .workspace-footer {
+    @apply bg-card border-t border-border flex items-center justify-between px-6 py-2 text-sm;
+    grid-column: 1 / 4;
+  }
+  
+  .panel-header {
+    @apply font-mono text-sm uppercase tracking-wide text-muted-foreground mb-4 pb-2 border-b border-border;
+  }
+  
+  .transcript-speaker {
+    @apply font-bold text-primary font-mono;
+  }
+  
+  .dictionary-term {
+    @apply bg-secondary p-4 rounded-lg border border-border mb-4;
+  }
+  
+  .rich-text-editor h2 {
+    @apply text-xl font-semibold mt-6 mb-2;
+  }
+  
+  .rich-text-editor ul {
+    @apply list-disc pl-6;
+  }
+  
+  .rich-text-editor li {
+    @apply mb-1;
   }
 }

@@ -1,41 +1,58 @@
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
 import { 
+  FileText, 
+  Settings, 
+  Download, 
+  Sparkles, 
   Menu,
-  Settings,
-  Sparkles,
-  FileText,
-  BookOpen,
-  User,
-  Download,
-  Play,
-  Clock,
-  Users,
-  CheckCircle,
-  AlertCircle,
-  DollarSign
+  ArrowLeft
 } from '@phosphor-icons/react'
-import { toast } from 'sonner'
+
+interface DictionaryEntry {
+  id: string
+  term: string
+  definition: string
+  context?: string
+}
+
+interface UserInstruction {
+  id: string
+  title: string
+  category: string
+  instruction: string
+  priority: 'low' | 'medium' | 'high'
+}
+
+interface GeneratedMinutes {
+  title: string
+  date: string
+  attendees: string[]
+  agenda: string[]
+  keyDecisions: string[]
+  actionItems: Array<{
+    task: string
+    assignee: string
+    dueDate: string
+  }>
+  nextSteps: string[]
+}
 
 interface WorkspaceLayoutProps {
   transcript: string
-  setTranscript: (value: string) => void
-  generatedMinutes: any
+  setTranscript: (transcript: string) => void
+  generatedMinutes: GeneratedMinutes | null
   onGenerate: () => void
   isGenerating: boolean
-  dictionary: any[]
-  userInstructions: any[]
+  dictionary: DictionaryEntry[]
+  userInstructions: UserInstruction[]
   onExport: () => void
+  onBackToMain?: () => void
 }
 
-const WorkspaceLayout = ({
+export default function WorkspaceLayout({
   transcript,
   setTranscript,
   generatedMinutes,
@@ -43,305 +60,225 @@ const WorkspaceLayout = ({
   isGenerating,
   dictionary,
   userInstructions,
-  onExport
-}: WorkspaceLayoutProps) => {
-  const [activeCustomizationTab, setActiveCustomizationTab] = useState('dictionary')
+  onExport,
+  onBackToMain
+}: WorkspaceLayoutProps) {
+  const [activeRightTab, setActiveRightTab] = useState('dictionary')
 
-  const speakers = [
-    { name: "Jane Doe", time: "00:02", role: "Chair" },
-    { name: "John Smith", time: "00:15", role: "Product Lead" },
-    { name: "Sarah Lee", time: "00:35", role: "Marketing Lead" },
-    { name: "Jane Doe", time: "00:55", role: "Chair" }
-  ]
-
-  const transcriptSections = [
-    {
-      speaker: "Jane Doe",
-      time: "00:02",
-      content: "Alright team, let's kick off the Q3 planning. First on the agenda is the product roadmap. John, can you give us an update?"
-    },
-    {
-      speaker: "John Smith", 
-      time: "00:15",
-      content: "Thanks, Jane. We've finalized the specs for Project Phoenix. The key challenge is the integration with the new API. We'll need to allocate more resources to backend development. I've updated the JIRA ticket."
-    },
-    {
-      speaker: "Sarah Lee",
-      time: "00:35", 
-      content: "On the marketing side, we're preparing a campaign for the v2.1 launch. We need to define the target ICP and messaging. I suggest we form a small task force."
-    },
-    {
-      speaker: "Jane Doe",
-      time: "00:55",
-      content: "Good point, Sarah. Let's make that an action item. John, Sarah, please sync up and propose a plan by EOD Friday."
+  // Parse transcript to extract speakers and content like the HTML example
+  const parseTranscript = (text: string) => {
+    const lines = text.split('\n').filter(line => line.trim())
+    const speakers: Array<{ speaker: string, time?: string, content: string }> = []
+    
+    for (const line of lines) {
+      const speakerMatch = line.match(/^(.+?)\s*\((\d{2}:\d{2})\):\s*(.+)$/)
+      if (speakerMatch) {
+        speakers.push({
+          speaker: speakerMatch[1],
+          time: speakerMatch[2],
+          content: speakerMatch[3]
+        })
+      } else if (line.includes(':')) {
+        const [speaker, ...contentParts] = line.split(':')
+        speakers.push({
+          speaker: speaker.trim(),
+          content: contentParts.join(':').trim()
+        })
+      } else if (speakers.length > 0) {
+        // Continue previous speaker's content
+        speakers[speakers.length - 1].content += ' ' + line
+      }
     }
-  ]
+    
+    return speakers
+  }
+
+  const parsedSpeakers = parseTranscript(transcript)
 
   return (
-    <div className="h-screen bg-background flex flex-col">
+    <div className="workspace-grid">
       {/* Header */}
-      <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
+      <header className="workspace-header">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="p-2">
-            <Menu className="h-4 w-4 text-muted-foreground" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">Q3 Planning Meeting</h1>
-              <div className="text-xs text-muted-foreground">Generated on {new Date().toLocaleDateString()}</div>
-            </div>
-          </div>
+          {onBackToMain && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onBackToMain}
+              className="mr-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <Menu className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-lg font-semibold">{generatedMinutes?.title || 'New Meeting Minutes'}</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>45 min</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>3 attendees</span>
-            </div>
-          </div>
+        <div className="flex items-center gap-4">
           <Button 
-            onClick={onExport}
-            disabled={!generatedMinutes}
-            className="bg-secondary hover:bg-secondary/80 text-secondary-foreground"
+            onClick={onExport} 
+            disabled={!generatedMinutes} 
+            variant="secondary" 
+            size="sm"
+            className="bg-secondary text-secondary-foreground hover:bg-accent"
           >
-            <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="ghost" size="sm" className="p-2">
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </Button>
+          <Settings className="h-5 w-5 text-muted-foreground cursor-pointer" />
         </div>
       </header>
 
-      {/* Main Workspace Grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0 border-border bg-border overflow-hidden">
+      {/* Left Panel - Transcript */}
+      <aside className="workspace-panel">
+        <h2 className="panel-header">Transcript</h2>
+        {parsedSpeakers.length > 0 ? (
+          <div className="space-y-4 text-sm">
+            {parsedSpeakers.map((entry, idx) => (
+              <div key={idx}>
+                <p className="transcript-speaker">
+                  {entry.speaker} {entry.time && `(${entry.time})`}:
+                </p>
+                <p className="text-muted-foreground mt-1">"{entry.content}"</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Textarea
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            placeholder="Paste your meeting transcript here or upload a file...&#10;&#10;Format example:&#10;Jane (00:02): Welcome everyone to today's meeting.&#10;John (00:15): Thanks for having me."
+            className="min-h-[400px] bg-background border-border resize-none text-sm"
+          />
+        )}
+      </aside>
+
+      {/* Center Panel - Generated Minutes */}
+      <main className="workspace-panel rich-text-editor">
+        <h2 className="panel-header">Generated Minutes</h2>
         
-        {/* Left Panel - Transcript */}
-        <div className="bg-card border-r border-border flex flex-col">
-          <div className="p-4 border-b border-border shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-mono text-sm uppercase tracking-wide text-muted-foreground">
-                Transcript
-              </h2>
-              <Badge variant="secondary" className="text-xs">
-                {transcript.length} chars
-              </Badge>
-            </div>
-            <Textarea
-              placeholder="Paste your meeting transcript here..."
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              className="min-h-24 resize-none font-mono text-sm"
-            />
-          </div>
-          
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
-              {transcriptSections.map((section, index) => (
-                <div key={index} className="group">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-primary font-mono text-sm">
-                      {section.speaker}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({section.time})
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed pl-2 border-l-2 border-border group-hover:border-primary/30 transition-colors">
-                    "{section.content}"
-                  </p>
-                </div>
+        {generatedMinutes ? (
+          <div>
+            <h2>Attendees</h2>
+            <ul>
+              {generatedMinutes.attendees.map((attendee, idx) => (
+                <li key={idx}>{attendee}</li>
               ))}
-            </div>
-          </ScrollArea>
-        </div>
+            </ul>
 
-        {/* Center Panel - Generated Minutes */}
-        <div className="bg-card border-r border-border flex flex-col">
-          <div className="p-4 border-b border-border shrink-0">
-            <h2 className="font-mono text-sm uppercase tracking-wide text-muted-foreground">
-              Generated Minutes
-            </h2>
-          </div>
-          
-          <ScrollArea className="flex-1 p-6">
-            {generatedMinutes ? (
-              <div className="prose prose-sm max-w-none">
-                <div className="mb-6">
-                  <h1 className="text-xl font-semibold mb-2">{generatedMinutes.title}</h1>
-                  <div className="text-sm text-muted-foreground mb-4">
-                    <strong>Date:</strong> {generatedMinutes.date}
-                  </div>
-                </div>
+            <h2>Decisions</h2>
+            <ul>
+              {generatedMinutes.keyDecisions.map((decision, idx) => (
+                <li key={idx}>{decision}</li>
+              ))}
+            </ul>
 
-                <section className="mb-6">
-                  <h2 className="text-lg font-medium mb-3 flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Attendees
-                  </h2>
-                  <ul className="space-y-1">
-                    {generatedMinutes.attendees?.map((attendee: string, index: number) => (
-                      <li key={index} className="text-sm flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                        {attendee}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+            <h2>Action Items</h2>
+            <ul>
+              {generatedMinutes.actionItems.map((item, idx) => (
+                <li key={idx}>
+                  <strong>{item.assignee}:</strong> {item.task} (Due: {item.dueDate})
+                </li>
+              ))}
+            </ul>
 
-                <section className="mb-6">
-                  <h2 className="text-lg font-medium mb-3 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4" />
-                    Key Decisions
-                  </h2>
-                  <ul className="space-y-2">
-                    {generatedMinutes.keyDecisions?.map((decision: string, index: number) => (
-                      <li key={index} className="text-sm flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-accent rounded-full mt-2 shrink-0"></span>
-                        {decision}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-
-                <section className="mb-6">
-                  <h2 className="text-lg font-medium mb-3 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    Action Items
-                  </h2>
-                  <div className="space-y-3">
-                    {generatedMinutes.actionItems?.map((item: any, index: number) => (
-                      <div key={index} className="p-3 bg-muted/50 rounded-lg">
-                        <div className="font-medium text-sm mb-1">{item.task}</div>
-                        <div className="text-xs text-muted-foreground">
-                          <strong>Assigned to:</strong> {item.assignee} • 
-                          <strong> Due:</strong> {item.dueDate}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full text-center">
-                <div>
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Minutes Generated</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Add a transcript and generate minutes to see results here.
-                  </p>
-                </div>
-              </div>
+            {generatedMinutes.nextSteps.length > 0 && (
+              <>
+                <h2>Next Steps</h2>
+                <ul>
+                  {generatedMinutes.nextSteps.map((step, idx) => (
+                    <li key={idx}>{step}</li>
+                  ))}
+                </ul>
+              </>
             )}
-          </ScrollArea>
-        </div>
-
-        {/* Right Panel - Customization */}
-        <div className="bg-card flex flex-col">
-          <div className="p-4 border-b border-border shrink-0">
-            <Tabs value={activeCustomizationTab} onValueChange={setActiveCustomizationTab}>
-              <TabsList className="grid w-full grid-cols-2 p-1 bg-muted">
-                <TabsTrigger 
-                  value="dictionary" 
-                  className="text-xs data-[state=active]:bg-background"
-                >
-                  <BookOpen className="h-3 w-3 mr-1" />
-                  Dictionary
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="instructions" 
-                  className="text-xs data-[state=active]:bg-background"
-                >
-                  <User className="h-3 w-3 mr-1" />
-                  Instructions
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
           </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 text-center">
+            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Minutes Generated</h3>
+            <p className="text-muted-foreground mb-4">Add a transcript and generate minutes to see them here.</p>
+          </div>
+        )}
+      </main>
 
-          <ScrollArea className="flex-1 p-4">
-            <Tabs value={activeCustomizationTab} onValueChange={setActiveCustomizationTab}>
+      {/* Right Panel - Customization */}
+      <aside className="workspace-panel">
+        <div className="border-b border-border">
+          <Tabs value={activeRightTab} onValueChange={setActiveRightTab}>
+            <TabsList className="flex -mb-px bg-transparent p-0 h-auto">
+              <TabsTrigger 
+                value="dictionary" 
+                className="inline-block p-4 border-b-2 rounded-t-lg data-[state=active]:border-primary data-[state=active]:text-primary bg-transparent"
+              >
+                Dictionary
+              </TabsTrigger>
+              <TabsTrigger 
+                value="instructions" 
+                className="inline-block p-4 border-b-2 rounded-t-lg data-[state=active]:border-primary data-[state=active]:text-primary bg-transparent hover:text-muted-foreground hover:border-muted-foreground"
+              >
+                Instructions
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="pt-4">
               <TabsContent value="dictionary" className="mt-0">
-                <div className="space-y-4">
-                  <Button 
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                    size="sm"
-                  >
-                    Add New Term
-                  </Button>
-                  
-                  <div className="space-y-3">
-                    {[
-                      { term: "Project Phoenix", definition: "Internal codename for the new flagship product." },
-                      { term: "ICP", definition: "Ideal Customer Profile." },
-                      { term: "EOD", definition: "End of Day." }
-                    ].map((entry, index) => (
-                      <Card key={index} className="p-4 bg-secondary/30 border border-border">
-                        <div className="font-semibold text-sm mb-1">{entry.term}</div>
-                        <div className="text-xs text-muted-foreground">{entry.definition}</div>
-                      </Card>
-                    ))}
-                  </div>
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 mb-4">
+                  Add New Term
+                </Button>
+                <div className="space-y-3">
+                  {Array.isArray(dictionary) && dictionary.length > 0 ? (
+                    dictionary.map((entry) => (
+                      <div key={entry.id} className="dictionary-term">
+                        <p className="font-semibold">{entry.term}</p>
+                        <p className="text-sm text-muted-foreground">{entry.definition}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div className="dictionary-term">
+                        <p className="font-semibold">Project Phoenix</p>
+                        <p className="text-sm text-muted-foreground">Internal codename for the new flagship product.</p>
+                      </div>
+                      <div className="dictionary-term">
+                        <p className="font-semibold">ICP</p>
+                        <p className="text-sm text-muted-foreground">Ideal Customer Profile.</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </TabsContent>
 
               <TabsContent value="instructions" className="mt-0">
                 <Textarea
-                  className="w-full min-h-48 text-sm font-mono"
-                  placeholder="Enter your organization's style guidelines and preferences..."
-                  defaultValue={`Always use a formal and professional tone.
-Summarize decisions at the top of the document.
-Format action items with the responsible person's name in bold.
-Include time estimates for action items when mentioned.
-Use bullet points for lists and clear section headers.`}
+                  className="w-full bg-secondary border border-border rounded-md p-3 text-sm"
+                  rows={8}
+                  placeholder="Enter your custom instructions..."
+                  defaultValue={Array.isArray(userInstructions) && userInstructions.length > 0 
+                    ? userInstructions.map(inst => `[${inst.category}] ${inst.title}: ${inst.instruction}`).join('\n') 
+                    : "Always use a formal and professional tone.\nSummarize decisions at the top of the document.\nFormat action items with the responsible person's name in bold."
+                  }
                 />
               </TabsContent>
-            </Tabs>
-          </ScrollArea>
+            </div>
+          </Tabs>
         </div>
-      </div>
+      </aside>
 
-      {/* Footer Status Bar */}
-      <footer className="h-12 bg-card border-t border-border flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Status: Ready</span>
-          </div>
-          <div>AI Model: OpenRouter/GPT-4o</div>
-          <div className="flex items-center gap-1">
-            <DollarSign className="h-3 w-3" />
-            <span>Cost: $0.018</span>
-          </div>
+      {/* Footer */}
+      <footer className="workspace-footer">
+        <div className="flex items-center gap-4 text-muted-foreground">
+          <span>Status: {isGenerating ? 'Generating...' : 'Ready'}</span>
+          <span>AI Model: OpenRouter/GPT-4o</span>
+          <span>Cost: $0.018</span>
         </div>
-        
         <Button 
-          onClick={onGenerate}
+          onClick={onGenerate} 
           disabled={isGenerating || !transcript.trim()}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"
         >
-          {isGenerating ? (
-            <>
-              <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full"></div>
-              Generating...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate
-            </>
-          )}
+          <Sparkles className="w-4 h-4" />
+          {isGenerating ? 'Generating...' : 'Regenerate'}
         </Button>
       </footer>
     </div>
   )
 }
-
-export default WorkspaceLayout

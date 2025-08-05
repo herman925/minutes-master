@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -16,7 +16,9 @@ import {
   TrendUp,
   Zap,
   Shield,
-  Layout
+  Layout,
+  Moon,
+  Sun
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -72,12 +74,26 @@ function App() {
   const [dictionary, setDictionary] = useKV<DictionaryEntry[]>('user-dictionary', [])
   const [userInstructions, setUserInstructions] = useKV<UserInstruction[]>('user-instructions', [])
   const [sampleMinutes, setSampleMinutes] = useKV<SampleMinute[]>('sample-minutes', [])
+  const [darkMode, setDarkMode] = useKV<boolean>('dark-mode', false)
   const [transcript, setTranscript] = useState('')
   const [generatedMinutes, setGeneratedMinutes] = useState<GeneratedMinutes | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [activeTab, setActiveTab] = useState('samples')
   const [useWorkspaceView, setUseWorkspaceView] = useState(false)
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [darkMode])
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode)
+  }
 
   const generateMinutes = async () => {
     if (!transcript.trim()) {
@@ -203,6 +219,7 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
           dictionary={dictionary}
           userInstructions={userInstructions}
           onExport={exportMinutes}
+          onBackToMain={() => setUseWorkspaceView(false)}
         />
       ) : (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -249,6 +266,14 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
                 >
                   <Layout className="h-4 w-4 mr-2" />
                   Switch to Workspace View
+                </Button>
+                <Button
+                  onClick={toggleDarkMode}
+                  variant="outline"
+                  size="sm"
+                  className="border-border"
+                >
+                  {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
               </div>
             </motion.div>
@@ -402,6 +427,18 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
                       </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">Theme Settings</div>
+                          <div className="text-sm text-muted-foreground">
+                            Switch between light and dark mode
+                          </div>
+                        </div>
+                        <Button onClick={toggleDarkMode} variant="outline">
+                          {darkMode ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+                          {darkMode ? 'Light Mode' : 'Dark Mode'}
+                        </Button>
+                      </div>
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div>
                           <div className="font-medium">Clear Session Data</div>
