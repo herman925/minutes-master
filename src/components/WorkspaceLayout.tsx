@@ -263,28 +263,28 @@ export default function WorkspaceLayout({
             <div>
               <h2>Attendees</h2>
               <ul>
-                {generatedMinutes.attendees.map((attendee, idx) => (
+                {Array.isArray(generatedMinutes.attendees) ? generatedMinutes.attendees.map((attendee, idx) => (
                   <li key={idx}>{attendee}</li>
-                ))}
+                )) : <li>No attendees listed</li>}
               </ul>
 
               <h2>Decisions</h2>
               <ul>
-                {generatedMinutes.keyDecisions.map((decision, idx) => (
+                {Array.isArray(generatedMinutes.keyDecisions) ? generatedMinutes.keyDecisions.map((decision, idx) => (
                   <li key={idx}>{decision}</li>
-                ))}
+                )) : <li>No decisions recorded</li>}
               </ul>
 
               <h2>Action Items</h2>
               <ul>
-                {generatedMinutes.actionItems.map((item, idx) => (
+                {Array.isArray(generatedMinutes.actionItems) ? generatedMinutes.actionItems.map((item, idx) => (
                   <li key={idx}>
                     <strong>{item.assignee}:</strong> {item.task} (Due: {item.dueDate})
                   </li>
-                ))}
+                )) : <li>No action items</li>}
               </ul>
 
-              {generatedMinutes.nextSteps.length > 0 && (
+              {Array.isArray(generatedMinutes.nextSteps) && generatedMinutes.nextSteps.length > 0 && (
                 <>
                   <h2>Next Steps</h2>
                   <ul>
@@ -378,7 +378,7 @@ export default function WorkspaceLayout({
                     className="w-full bg-secondary border border-border rounded-md p-2"
                     rows={8}
                     defaultValue={Array.isArray(userInstructions) && userInstructions.length > 0 
-                      ? userInstructions.map(inst => `[${inst.category}] ${inst.title}: ${inst.instruction}`).join('\n') 
+                      ? userInstructions.map(inst => `[${inst.category}] ${inst.title}: ${inst.instruction}`).join('\n\n') 
                       : "Always use a formal and professional tone.\nSummarize decisions at the top of the document.\nFormat action items with the responsible person's name in bold."
                     }
                   />

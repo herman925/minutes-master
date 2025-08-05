@@ -78,14 +78,16 @@ function App() {
     setProgress(10)
 
     try {
-      // Build dictionary context
-      const dictContext = Array.isArray(dictionary) && dictionary.length > 0 
-        ? `\n\nCustom terminology:\n${dictionary.map(entry => `${entry.term}: ${entry.definition}${entry.context ? ` (${entry.context})` : ''}`).join('\n')}`
+      // Build dictionary context - ensure arrays exist and are valid
+      const validDictionary = Array.isArray(dictionary) ? dictionary : []
+      const dictContext = validDictionary.length > 0 
+        ? `\n\nCustom terminology:\n${validDictionary.map(entry => `${entry.term}: ${entry.definition}${entry.context ? ` (${entry.context})` : ''}`).join('\n')}`
         : ''
 
-      // Build instructions context
-      const instructionsContext = Array.isArray(userInstructions) && userInstructions.length > 0
-        ? `\n\nUser Instructions (follow these rules):\n${userInstructions
+      // Build instructions context - ensure arrays exist and are valid
+      const validInstructions = Array.isArray(userInstructions) ? userInstructions : []
+      const instructionsContext = validInstructions.length > 0
+        ? `\n\nUser Instructions (follow these rules):\n${validInstructions
             .sort((a, b) => {
               const priorityOrder = { high: 3, medium: 2, low: 1 }
               return priorityOrder[b.priority] - priorityOrder[a.priority]
@@ -94,9 +96,10 @@ function App() {
             .join('\n')}`
         : ''
 
-      // Build sample context from pool
-      const sampleContext = Array.isArray(sampleMinutes) && sampleMinutes.length > 0
-        ? `\n\nStyle and format guidelines based on your sample library:\n${sampleMinutes
+      // Build sample context from pool - ensure arrays exist and are valid
+      const validSamples = Array.isArray(sampleMinutes) ? sampleMinutes : []
+      const sampleContext = validSamples.length > 0
+        ? `\n\nStyle and format guidelines based on your sample library:\n${validSamples
             .slice(0, 3) // Use top 3 samples
             .map(sample => `${sample.name}:\n${sample.content.substring(0, 1000)}`)
             .join('\n\n---\n\n')}`
@@ -147,19 +150,19 @@ function App() {
 **Date:** ${generatedMinutes.date}
 
 ## Attendees
-${generatedMinutes.attendees.map(name => `- ${name}`).join('\n')}
+${Array.isArray(generatedMinutes.attendees) ? generatedMinutes.attendees.map(name => `- ${name}`).join('\n') : ''}
 
 ## Agenda
-${generatedMinutes.agenda.map(item => `- ${item}`).join('\n')}
+${Array.isArray(generatedMinutes.agenda) ? generatedMinutes.agenda.map(item => `- ${item}`).join('\n') : ''}
 
 ## Key Decisions
-${generatedMinutes.keyDecisions.map(decision => `- ${decision}`).join('\n')}
+${Array.isArray(generatedMinutes.keyDecisions) ? generatedMinutes.keyDecisions.map(decision => `- ${decision}`).join('\n') : ''}
 
 ## Action Items
-${generatedMinutes.actionItems.map(item => `- **${item.task}** (Assigned to: ${item.assignee}, Due: ${item.dueDate})`).join('\n')}
+${Array.isArray(generatedMinutes.actionItems) ? generatedMinutes.actionItems.map(item => `- **${item.task}** (Assigned to: ${item.assignee}, Due: ${item.dueDate})`).join('\n') : ''}
 
 ## Next Steps
-${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
+${Array.isArray(generatedMinutes.nextSteps) ? generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n') : ''}
 `
 
     const blob = new Blob([content], { type: 'text/markdown' })
@@ -202,7 +205,10 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
       organization: 'Default'
     }))
     
-    setSampleMinutes(prev => [...(Array.isArray(prev) ? prev : []), ...newSamples])
+    setSampleMinutes(prev => {
+      const currentSamples = Array.isArray(prev) ? prev : []
+      return [...currentSamples, ...newSamples]
+    })
     
     // Add instructions if provided
     if (wizardData.instructions) {
@@ -213,7 +219,10 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
         instruction: wizardData.instructions,
         priority: 'high' as const
       }
-      setUserInstructions(prev => [...(Array.isArray(prev) ? prev : []), newInstruction])
+      setUserInstructions(prev => {
+        const currentInstructions = Array.isArray(prev) ? prev : []
+        return [...currentInstructions, newInstruction]
+      })
     }
     
     // Mark wizard as completed and switch to workspace
