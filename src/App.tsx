@@ -15,7 +15,8 @@ import {
   FolderOpen,
   TrendUp,
   Zap,
-  Shield
+  Shield,
+  Layout
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -25,6 +26,7 @@ import UserInstructions from '@/components/UserInstructions'
 import ApiManager from '@/components/ApiManager'
 import TranscriptInput from '@/components/TranscriptInput'
 import SamplePool from '@/components/SamplePool'
+import WorkspaceLayout from '@/components/WorkspaceLayout'
 
 interface DictionaryEntry {
   id: string
@@ -75,6 +77,7 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [activeTab, setActiveTab] = useState('samples')
+  const [useWorkspaceView, setUseWorkspaceView] = useState(false)
 
   const generateMinutes = async () => {
     if (!transcript.trim()) {
@@ -189,235 +192,271 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <div className="flex items-center justify-center gap-4 mb-6">
+    <>
+      {useWorkspaceView ? (
+        <WorkspaceLayout
+          transcript={transcript}
+          setTranscript={setTranscript}
+          generatedMinutes={generatedMinutes}
+          onGenerate={generateMinutes}
+          isGenerating={isGenerating}
+          dictionary={dictionary}
+          userInstructions={userInstructions}
+          onExport={exportMinutes}
+        />
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+          <div className="container mx-auto px-4 py-8 max-w-7xl">
+            {/* Header */}
             <motion.div 
-              className="p-4 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
             >
-              <Sparkles className="h-10 w-10 text-white" />
-            </motion.div>
-            <div>
-              <h1 className="text-5xl font-bold tracking-tight gradient-text mb-2">
-                MinutesMaster AI
-              </h1>
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Shield className="h-4 w-4" />
-                <span>Secure</span>
-                <span>•</span>
-                <Zap className="h-4 w-4" />
-                <span>Intelligent</span>
-                <span>•</span>
-                <TrendUp className="h-4 w-4" />
-                <span>Professional</span>
-              </div>
-            </div>
-          </div>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Transform meeting transcripts into professional minutes with AI-powered intelligence, 
-            custom terminology, and organizational style guidance
-          </p>
-        </motion.div>
-
-        {/* Enhanced Stats Dashboard */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8"
-        >
-          <Card className="card-shadow hover-lift transition-smooth">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(sampleMinutes) ? sampleMinutes.length : 0}</div>
-              <div className="text-xs text-muted-foreground">Sample Minutes</div>
-            </CardContent>
-          </Card>
-          <Card className="card-shadow hover-lift transition-smooth">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(dictionary) ? dictionary.length : 0}</div>
-              <div className="text-xs text-muted-foreground">Custom Terms</div>
-            </CardContent>
-          </Card>
-          <Card className="card-shadow hover-lift transition-smooth">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(userInstructions) ? userInstructions.length : 0}</div>
-              <div className="text-xs text-muted-foreground">User Rules</div>
-            </CardContent>
-          </Card>
-          <Card className="card-shadow hover-lift transition-smooth">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{transcript.length}</div>
-              <div className="text-xs text-muted-foreground">Transcript Chars</div>
-            </CardContent>
-          </Card>
-          <Card className="card-shadow hover-lift transition-smooth">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{generatedMinutes ? '1' : '0'}</div>
-              <div className="text-xs text-muted-foreground">Generated</div>
-            </CardContent>
-          </Card>
-          <Card className="card-shadow hover-lift transition-smooth">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-accent mb-1">
-                {(Array.isArray(dictionary) ? dictionary.length : 0) + (Array.isArray(userInstructions) ? userInstructions.length : 0) + (Array.isArray(sampleMinutes) ? sampleMinutes.length : 0) > 0 ? '100' : '0'}%
-              </div>
-              <div className="text-xs text-muted-foreground">Setup Complete</div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Progress Bar */}
-        {isGenerating && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-6"
-          >
-            <Card className="card-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </motion.div>
-                  <span className="font-medium">Generating professional meeting minutes...</span>
-                </div>
-                <Progress value={progress} className="h-3" />
-                <div className="text-sm text-muted-foreground mt-2">
-                  Processing with {Array.isArray(dictionary) ? dictionary.length : 0} custom terms, {Array.isArray(userInstructions) ? userInstructions.length : 0} rules, and {Array.isArray(sampleMinutes) ? sampleMinutes.length : 0} style samples
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Main Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 p-1 h-12 bg-muted/50 backdrop-blur-sm">
-              <TabsTrigger value="samples" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
-                <FolderOpen className="h-4 w-4" />
-                Sample Pool
-              </TabsTrigger>
-              <TabsTrigger value="transcript" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
-                <FileText className="h-4 w-4" />
-                Transcript
-              </TabsTrigger>
-              <TabsTrigger value="dictionary" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
-                <BookOpen className="h-4 w-4" />
-                Dictionary
-              </TabsTrigger>
-              <TabsTrigger value="instructions" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
-                <User className="h-4 w-4" />
-                Instructions
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
-                <Settings className="h-4 w-4" />
-                Settings
-              </TabsTrigger>
-              <TabsTrigger value="preview" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground transition-smooth" disabled={!generatedMinutes}>
-                <Download className="h-4 w-4" />
-                Preview
-                {generatedMinutes && <Badge className="ml-1 h-5 w-5 rounded-full p-0 text-xs">!</Badge>}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="samples">
-              <SamplePool samples={sampleMinutes} setSamples={setSampleMinutes} />
-            </TabsContent>
-
-            <TabsContent value="transcript">
-              <TranscriptInput 
-                transcript={transcript}
-                setTranscript={setTranscript}
-                onGenerate={generateMinutes}
-                isGenerating={isGenerating}
-              />
-            </TabsContent>
-
-            <TabsContent value="dictionary">
-              <DictionaryManager 
-                dictionary={dictionary} 
-                setDictionary={setDictionary} 
-              />
-            </TabsContent>
-
-            <TabsContent value="instructions">
-              <UserInstructions 
-                instructions={userInstructions}
-                setInstructions={setUserInstructions}
-              />
-            </TabsContent>
-
-            <TabsContent value="settings" className="space-y-6">
-              <ApiManager />
-              
-              <Card className="card-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="p-2 bg-destructive/10 rounded-lg">
-                      <Settings className="h-5 w-5 text-destructive" />
-                    </div>
-                    Session Management
-                  </CardTitle>
-                  <p className="text-muted-foreground">
-                    Manage your current session data and preferences
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">Clear Session Data</div>
-                      <div className="text-sm text-muted-foreground">
-                        Clear transcript and generated minutes (keeps samples, dictionary, and instructions)
-                      </div>
-                    </div>
-                    <Button onClick={clearAllData} variant="outline">
-                      Clear Session
-                    </Button>
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <motion.div 
+                  className="p-4 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg"
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <Sparkles className="h-10 w-10 text-white" />
+                </motion.div>
+                <div>
+                  <h1 className="text-5xl font-bold tracking-tight gradient-text mb-2">
+                    MinutesMaster AI
+                  </h1>
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Shield className="h-4 w-4" />
+                    <span>Secure</span>
+                    <span>•</span>
+                    <Zap className="h-4 w-4" />
+                    <span>Intelligent</span>
+                    <span>•</span>
+                    <TrendUp className="h-4 w-4" />
+                    <span>Professional</span>
                   </div>
+                </div>
+              </div>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-6">
+                Transform meeting transcripts into professional minutes with AI-powered intelligence, 
+                custom terminology, and organizational style guidance
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <Button 
+                  onClick={() => setUseWorkspaceView(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Layout className="h-4 w-4 mr-2" />
+                  Switch to Workspace View
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Enhanced Stats Dashboard */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8"
+            >
+              <Card className="card-shadow hover-lift transition-smooth">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(sampleMinutes) ? sampleMinutes.length : 0}</div>
+                  <div className="text-xs text-muted-foreground">Sample Minutes</div>
                 </CardContent>
               </Card>
-            </TabsContent>
+              <Card className="card-shadow hover-lift transition-smooth">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(dictionary) ? dictionary.length : 0}</div>
+                  <div className="text-xs text-muted-foreground">Custom Terms</div>
+                </CardContent>
+              </Card>
+              <Card className="card-shadow hover-lift transition-smooth">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(userInstructions) ? userInstructions.length : 0}</div>
+                  <div className="text-xs text-muted-foreground">User Rules</div>
+                </CardContent>
+              </Card>
+              <Card className="card-shadow hover-lift transition-smooth">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">{transcript.length}</div>
+                  <div className="text-xs text-muted-foreground">Transcript Chars</div>
+                </CardContent>
+              </Card>
+              <Card className="card-shadow hover-lift transition-smooth">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">{generatedMinutes ? '1' : '0'}</div>
+                  <div className="text-xs text-muted-foreground">Generated</div>
+                </CardContent>
+              </Card>
+              <Card className="card-shadow hover-lift transition-smooth">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-accent mb-1">
+                    {(Array.isArray(dictionary) ? dictionary.length : 0) + (Array.isArray(userInstructions) ? userInstructions.length : 0) + (Array.isArray(sampleMinutes) ? sampleMinutes.length : 0) > 0 ? '100' : '0'}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">Setup Complete</div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <TabsContent value="preview">
-              {generatedMinutes ? (
-                <MinutesPreview 
-                  minutes={generatedMinutes} 
-                  onExport={exportMinutes}
-                />
-              ) : (
+            {/* Progress Bar */}
+            {isGenerating && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6"
+              >
                 <Card className="card-shadow">
-                  <CardContent className="p-12 text-center">
-                    <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No Minutes Generated Yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Add a transcript and click "Generate Minutes" to see your results here.
-                    </p>
-                    <Button onClick={() => setActiveTab('transcript')} className="bg-accent hover:bg-accent/90">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Go to Transcript
-                    </Button>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+                        <Sparkles className="h-5 w-5 text-primary" />
+                      </motion.div>
+                      <span className="font-medium">Generating professional meeting minutes...</span>
+                    </div>
+                    <Progress value={progress} className="h-3" />
+                    <div className="text-sm text-muted-foreground mt-2">
+                      Processing with {Array.isArray(dictionary) ? dictionary.length : 0} custom terms, {Array.isArray(userInstructions) ? userInstructions.length : 0} rules, and {Array.isArray(sampleMinutes) ? sampleMinutes.length : 0} style samples
+                    </div>
                   </CardContent>
                 </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        </motion.div>
-      </div>
-    </div>
+              </motion.div>
+            )}
+
+            {/* Main Content */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="grid w-full grid-cols-6 p-1 h-12 bg-muted/50 backdrop-blur-sm">
+                  <TabsTrigger value="samples" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
+                    <FolderOpen className="h-4 w-4" />
+                    Sample Pool
+                  </TabsTrigger>
+                  <TabsTrigger value="transcript" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
+                    <FileText className="h-4 w-4" />
+                    Transcript
+                  </TabsTrigger>
+                  <TabsTrigger value="dictionary" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
+                    <BookOpen className="h-4 w-4" />
+                    Dictionary
+                  </TabsTrigger>
+                  <TabsTrigger value="instructions" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
+                    <User className="h-4 w-4" />
+                    Instructions
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-smooth">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground transition-smooth" disabled={!generatedMinutes}>
+                    <Download className="h-4 w-4" />
+                    Preview
+                    {generatedMinutes && <Badge className="ml-1 h-5 w-5 rounded-full p-0 text-xs">!</Badge>}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="samples">
+                  <SamplePool samples={sampleMinutes} setSamples={setSampleMinutes} />
+                </TabsContent>
+
+                <TabsContent value="transcript">
+                  <TranscriptInput 
+                    transcript={transcript}
+                    setTranscript={setTranscript}
+                    onGenerate={generateMinutes}
+                    isGenerating={isGenerating}
+                  />
+                </TabsContent>
+
+                <TabsContent value="dictionary">
+                  <DictionaryManager 
+                    dictionary={dictionary} 
+                    setDictionary={setDictionary} 
+                  />
+                </TabsContent>
+
+                <TabsContent value="instructions">
+                  <UserInstructions 
+                    instructions={userInstructions}
+                    setInstructions={setUserInstructions}
+                  />
+                </TabsContent>
+
+                <TabsContent value="settings" className="space-y-6">
+                  <ApiManager />
+                  
+                  <Card className="card-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-3">
+                        <div className="p-2 bg-destructive/10 rounded-lg">
+                          <Settings className="h-5 w-5 text-destructive" />
+                        </div>
+                        Session Management
+                      </CardTitle>
+                      <p className="text-muted-foreground">
+                        Manage your current session data and preferences
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">Clear Session Data</div>
+                          <div className="text-sm text-muted-foreground">
+                            Clear transcript and generated minutes (keeps samples, dictionary, and instructions)
+                          </div>
+                        </div>
+                        <Button onClick={clearAllData} variant="outline">
+                          Clear Session
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">Switch to Workspace View</div>
+                          <div className="text-sm text-muted-foreground">
+                            Use the professional workspace interface for advanced editing
+                          </div>
+                        </div>
+                        <Button onClick={() => setUseWorkspaceView(true)} variant="outline">
+                          <Layout className="h-4 w-4 mr-2" />
+                          Workspace
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="preview">
+                  {generatedMinutes ? (
+                    <MinutesPreview 
+                      minutes={generatedMinutes} 
+                      onExport={exportMinutes}
+                    />
+                  ) : (
+                    <Card className="card-shadow">
+                      <CardContent className="p-12 text-center">
+                        <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium mb-2">No Minutes Generated Yet</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Add a transcript and click "Generate Minutes" to see your results here.
+                        </p>
+                        <Button onClick={() => setActiveTab('transcript')} className="bg-accent hover:bg-accent/90">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Go to Transcript
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </motion.div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
