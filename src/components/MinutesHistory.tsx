@@ -35,7 +35,7 @@ export default function MinutesHistory({ meetings, onNewMeeting }: MinutesHistor
               <li className="text-sm text-muted-foreground">No meetings yet</li>
             )}
             {meetings.map(meeting => (
-              <li key={meeting.title}>
+              <li key={`${meeting.title}-${meeting.date}`}>
                 <div className="flex items-center p-2 text-foreground rounded-lg hover:bg-accent group cursor-pointer">
                   <FileText className="mr-3" />
                   <span>{meeting.title}</span>
