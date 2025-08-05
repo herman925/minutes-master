@@ -38,14 +38,14 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
       context: newEntry.context.trim() || undefined
     }
 
-    setDictionary([...dictionary, entry])
+    setDictionary(Array.isArray(dictionary) ? [...dictionary, entry] : [entry])
     setNewEntry({ term: '', definition: '', context: '' })
     setIsAddingNew(false)
     toast.success('Term added to dictionary')
   }
 
   const deleteEntry = (id: string) => {
-    setDictionary(dictionary.filter(entry => entry.id !== id))
+    setDictionary(Array.isArray(dictionary) ? dictionary.filter(entry => entry.id !== id) : [])
     toast.success('Term removed from dictionary')
   }
 
@@ -64,7 +64,7 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
       return
     }
 
-    setDictionary(dictionary.map(entry => 
+    setDictionary(Array.isArray(dictionary) ? dictionary.map(entry => 
       entry.id === editingId 
         ? {
             ...entry,
@@ -73,7 +73,7 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
             context: newEntry.context.trim() || undefined
           }
         : entry
-    ))
+    ) : [])
     
     setEditingId(null)
     setNewEntry({ term: '', definition: '', context: '' })
@@ -96,7 +96,7 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
   ]
 
   const addSuggestedTerm = (suggested: { term: string; definition: string; context: string }) => {
-    if (dictionary.some(entry => entry.term.toLowerCase() === suggested.term.toLowerCase())) {
+    if (Array.isArray(dictionary) && dictionary.some(entry => entry.term.toLowerCase() === suggested.term.toLowerCase())) {
       toast.error('Term already exists in dictionary')
       return
     }
@@ -106,7 +106,7 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
       ...suggested
     }
 
-    setDictionary([...dictionary, entry])
+    setDictionary(Array.isArray(dictionary) ? [...dictionary, entry] : [entry])
     toast.success(`Added ${suggested.term} to dictionary`)
   }
 
@@ -177,14 +177,14 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
 
           {/* Dictionary Entries */}
           <div className="space-y-3">
-            {dictionary.length === 0 && !isAddingNew ? (
+            {(!Array.isArray(dictionary) || dictionary.length === 0) && !isAddingNew ? (
               <div className="text-center py-8 text-muted-foreground">
                 <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>No terms in your dictionary yet</p>
                 <p className="text-sm">Add terms to help the AI understand your organization's language</p>
               </div>
             ) : (
-              dictionary.map((entry) => (
+              (Array.isArray(dictionary) ? dictionary : []).map((entry) => (
                 <div key={entry.id} className="border rounded-lg p-4">
                   {editingId === entry.id ? (
                     <div className="space-y-4">
@@ -266,7 +266,7 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
       </Card>
 
       {/* Suggested Terms */}
-      {dictionary.length < 10 && (
+      {(!Array.isArray(dictionary) || dictionary.length < 10) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Suggested Business Terms</CardTitle>
@@ -277,7 +277,7 @@ export default function DictionaryManager({ dictionary, setDictionary }: Diction
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {suggestedTerms
-                .filter(suggested => !dictionary.some(entry => 
+                .filter(suggested => !Array.isArray(dictionary) || !dictionary.some(entry => 
                   entry.term.toLowerCase() === suggested.term.toLowerCase()
                 ))
                 .map((suggested, index) => (

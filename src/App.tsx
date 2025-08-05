@@ -87,12 +87,12 @@ function App() {
 
     try {
       // Build dictionary context
-      const dictContext = dictionary.length > 0 
+      const dictContext = Array.isArray(dictionary) && dictionary.length > 0 
         ? `\n\nCustom terminology:\n${dictionary.map(entry => `${entry.term}: ${entry.definition}${entry.context ? ` (${entry.context})` : ''}`).join('\n')}`
         : ''
 
       // Build instructions context
-      const instructionsContext = userInstructions.length > 0
+      const instructionsContext = Array.isArray(userInstructions) && userInstructions.length > 0
         ? `\n\nUser Instructions (follow these rules):\n${userInstructions
             .sort((a, b) => {
               const priorityOrder = { high: 3, medium: 2, low: 1 }
@@ -103,7 +103,7 @@ function App() {
         : ''
 
       // Build sample context from pool
-      const sampleContext = sampleMinutes.length > 0
+      const sampleContext = Array.isArray(sampleMinutes) && sampleMinutes.length > 0
         ? `\n\nStyle and format guidelines based on your sample library:\n${sampleMinutes
             .slice(0, 3) // Use top 3 samples
             .map(sample => `${sample.name}:\n${sample.content.substring(0, 1000)}`)
@@ -237,19 +237,19 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
         >
           <Card className="card-shadow hover-lift transition-smooth">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{sampleMinutes.length}</div>
+              <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(sampleMinutes) ? sampleMinutes.length : 0}</div>
               <div className="text-xs text-muted-foreground">Sample Minutes</div>
             </CardContent>
           </Card>
           <Card className="card-shadow hover-lift transition-smooth">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{dictionary.length}</div>
+              <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(dictionary) ? dictionary.length : 0}</div>
               <div className="text-xs text-muted-foreground">Custom Terms</div>
             </CardContent>
           </Card>
           <Card className="card-shadow hover-lift transition-smooth">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary mb-1">{userInstructions.length}</div>
+              <div className="text-2xl font-bold text-primary mb-1">{Array.isArray(userInstructions) ? userInstructions.length : 0}</div>
               <div className="text-xs text-muted-foreground">User Rules</div>
             </CardContent>
           </Card>
@@ -268,7 +268,7 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
           <Card className="card-shadow hover-lift transition-smooth">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-accent mb-1">
-                {dictionary.length + userInstructions.length + sampleMinutes.length > 0 ? '100' : '0'}%
+                {(Array.isArray(dictionary) ? dictionary.length : 0) + (Array.isArray(userInstructions) ? userInstructions.length : 0) + (Array.isArray(sampleMinutes) ? sampleMinutes.length : 0) > 0 ? '100' : '0'}%
               </div>
               <div className="text-xs text-muted-foreground">Setup Complete</div>
             </CardContent>
@@ -292,7 +292,7 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
                 </div>
                 <Progress value={progress} className="h-3" />
                 <div className="text-sm text-muted-foreground mt-2">
-                  Processing with {dictionary.length} custom terms, {userInstructions.length} rules, and {sampleMinutes.length} style samples
+                  Processing with {Array.isArray(dictionary) ? dictionary.length : 0} custom terms, {Array.isArray(userInstructions) ? userInstructions.length : 0} rules, and {Array.isArray(sampleMinutes) ? sampleMinutes.length : 0} style samples
                 </div>
               </CardContent>
             </Card>

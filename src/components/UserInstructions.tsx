@@ -63,14 +63,14 @@ export default function UserInstructions({ instructions, setInstructions }: User
       priority: newInstruction.priority
     }
 
-    setInstructions([...instructions, instruction])
+    setInstructions(Array.isArray(instructions) ? [...instructions, instruction] : [instruction])
     setNewInstruction({ title: '', category: '', instruction: '', priority: 'medium' })
     setIsAddingNew(false)
     toast.success('Instruction added')
   }
 
   const deleteInstruction = (id: string) => {
-    setInstructions(instructions.filter(inst => inst.id !== id))
+    setInstructions(Array.isArray(instructions) ? instructions.filter(inst => inst.id !== id) : [])
     toast.success('Instruction removed')
   }
 
@@ -90,7 +90,7 @@ export default function UserInstructions({ instructions, setInstructions }: User
       return
     }
 
-    setInstructions(instructions.map(inst => 
+    setInstructions(Array.isArray(instructions) ? instructions.map(inst => 
       inst.id === editingId 
         ? {
             ...inst,
@@ -100,7 +100,7 @@ export default function UserInstructions({ instructions, setInstructions }: User
             priority: newInstruction.priority
           }
         : inst
-    ))
+    ) : [])
     
     setEditingId(null)
     setNewInstruction({ title: '', category: '', instruction: '', priority: 'medium' })
@@ -119,7 +119,7 @@ export default function UserInstructions({ instructions, setInstructions }: User
       return
     }
 
-    if (instructions.length === 0) {
+    if (!Array.isArray(instructions) || instructions.length === 0) {
       toast.error('No instructions to test')
       return
     }
@@ -180,7 +180,7 @@ Please demonstrate how these instructions would affect the output by providing a
   ]
 
   const addPredefinedInstruction = (predefined: typeof predefinedInstructions[0]) => {
-    if (instructions.some(inst => inst.title.toLowerCase() === predefined.title.toLowerCase())) {
+    if (Array.isArray(instructions) && instructions.some(inst => inst.title.toLowerCase() === predefined.title.toLowerCase())) {
       toast.error('Similar instruction already exists')
       return
     }
@@ -190,18 +190,18 @@ Please demonstrate how these instructions would affect the output by providing a
       ...predefined
     }
 
-    setInstructions([...instructions, instruction])
+    setInstructions(Array.isArray(instructions) ? [...instructions, instruction] : [instruction])
     toast.success(`Added "${predefined.title}" instruction`)
   }
 
-  const groupedInstructions = instructions.reduce((groups, instruction) => {
+  const groupedInstructions = Array.isArray(instructions) ? instructions.reduce((groups, instruction) => {
     const category = instruction.category
     if (!groups[category]) {
       groups[category] = []
     }
     groups[category].push(instruction)
     return groups
-  }, {} as Record<string, UserInstruction[]>)
+  }, {} as Record<string, UserInstruction[]>) : {}
 
   return (
     <div className="space-y-6">
@@ -218,7 +218,7 @@ Please demonstrate how these instructions would affect the output by providing a
               <Button 
                 onClick={() => setTestMode(!testMode)} 
                 variant="outline"
-                disabled={instructions.length === 0}
+                disabled={!Array.isArray(instructions) || instructions.length === 0}
               >
                 <TestTube className="h-4 w-4 mr-2" />
                 Test Mode
@@ -461,7 +461,7 @@ Please demonstrate how these instructions would affect the output by providing a
       </Card>
 
       {/* Predefined Instructions */}
-      {instructions.length < 8 && (
+      {(!Array.isArray(instructions) || instructions.length < 8) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Suggested Instructions</CardTitle>
@@ -472,7 +472,7 @@ Please demonstrate how these instructions would affect the output by providing a
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {predefinedInstructions
-                .filter(predefined => !instructions.some(inst => 
+                .filter(predefined => !Array.isArray(instructions) || !instructions.some(inst => 
                   inst.title.toLowerCase() === predefined.title.toLowerCase()
                 ))
                 .map((predefined, index) => (

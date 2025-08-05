@@ -67,7 +67,7 @@ export default function SamplePool({ samples, setSamples }: SamplePoolProps) {
           fileSize: file.size
         }
         
-        setSamples(prev => [...prev, sample])
+        setSamples(prev => Array.isArray(prev) ? [...prev, sample] : [sample])
         toast.success(`Added sample: ${sample.name}`)
       } catch (error) {
         toast.error(`Failed to process ${file.name}`)
@@ -92,14 +92,14 @@ export default function SamplePool({ samples, setSamples }: SamplePoolProps) {
       organization: newSample.organization || undefined
     }
 
-    setSamples(prev => [...prev, sample])
+    setSamples(prev => Array.isArray(prev) ? [...prev, sample] : [sample])
     setNewSample({ name: '', content: '', tags: '', meetingType: '', organization: '' })
     setIsAddingManually(false)
     toast.success(`Added sample: ${sample.name}`)
   }
 
   const deleteSample = (id: string) => {
-    setSamples(prev => prev.filter(s => s.id !== id))
+    setSamples(prev => Array.isArray(prev) ? prev.filter(s => s.id !== id) : [])
     if (selectedSample?.id === id) {
       setSelectedSample(null)
     }
@@ -108,19 +108,21 @@ export default function SamplePool({ samples, setSamples }: SamplePoolProps) {
 
   const getAllTags = () => {
     const tags = new Set<string>()
-    samples.forEach(sample => {
-      sample.tags.forEach(tag => tags.add(tag))
-    })
+    if (Array.isArray(samples)) {
+      samples.forEach(sample => {
+        sample.tags.forEach(tag => tags.add(tag))
+      })
+    }
     return Array.from(tags).sort()
   }
 
-  const filteredSamples = samples.filter(sample => {
+  const filteredSamples = Array.isArray(samples) ? samples.filter(sample => {
     const matchesSearch = sample.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          sample.content.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesTags = selectedTags.length === 0 || 
                        selectedTags.some(tag => sample.tags.includes(tag))
     return matchesSearch && matchesTags
-  })
+  }) : []
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -148,7 +150,7 @@ export default function SamplePool({ samples, setSamples }: SamplePoolProps) {
             </div>
             Sample Minutes Pool
             <Badge variant="secondary" className="ml-auto">
-              {samples.length} samples
+              {Array.isArray(samples) ? samples.length : 0} samples
             </Badge>
           </CardTitle>
           <p className="text-muted-foreground">
