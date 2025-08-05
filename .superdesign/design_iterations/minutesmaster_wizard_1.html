@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinutesMaster AI - Setup Wizard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link id="dark-theme" rel="stylesheet" href="theme_minutesmaster_1.css">
+    <link id="light-theme" rel="stylesheet" href="theme_minutesmaster_light_1.css" disabled>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono&family=Merriweather&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        :root {
+            color-scheme: light dark;
+        }
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-sans);
+        }
+        .wizard-container {
+            max-width: 48rem; /* 768px */
+            margin: 4rem auto;
+            background-color: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+        }
+        .wizard-step {
+            display: none;
+        }
+        .wizard-step.active {
+            display: block;
+        }
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 4rem;
+            text-align: center;
+            background-color: var(--secondary);
+            transition: background-color 0.2s ease;
+        }
+        .drop-zone.drag-over {
+            background-color: var(--accent);
+            color: var(--accent-foreground);
+        }
+    </style>
+</head>
+<body class="antialiased flex items-center justify-center min-h-screen p-4">
+
+    <div class="wizard-container">
+        <div class="p-6 border-b border-border flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold">MinutesMaster AI</h1>
+                <p class="text-sm text-muted-foreground">Setup Wizard</p>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-md hover:bg-secondary">
+                <i data-lucide="sun" class="hidden dark:inline-block"></i>
+                <i data-lucide="moon" class="inline-block dark:hidden"></i>
+            </button>
+        </div>
+
+        <!-- Step 1: Upload Transcript -->
+        <div id="step-1" class="wizard-step active p-8">
+            <div class="text-center mb-6">
+                <p class="text-sm font-mono text-muted-foreground">STEP 1 OF 3</p>
+                <h2 class="text-2xl font-semibold">Upload Your Transcript</h2>
+                <p class="text-muted-foreground">Start by providing the meeting transcript or audio file.</p>
+            </div>
+            <div id="drop-zone-1" class="drop-zone">
+                <i data-lucide="upload-cloud" class="w-16 h-16 mx-auto text-muted-foreground"></i>
+                <p class="mt-4 font-semibold">Drag & drop your TXT or MP3 file here</p>
+                <p class="text-sm text-muted-foreground">or</p>
+                <button class="mt-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium">Browse Files</button>
+            </div>
+            <div class="mt-6 h-10">
+                <!-- Progress bar will go here -->
+            </div>
+            <div class="flex justify-end mt-4">
+                <button onclick="goToStep(2)" class="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold">Next Step</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Upload Samples -->
+        <div id="step-2" class="wizard-step p-8">
+            <div class="text-center mb-6">
+                <p class="text-sm font-mono text-muted-foreground">STEP 2 OF 3</p>
+                <h2 class="text-2xl font-semibold">Upload Sample Minutes (Optional)</h2>
+                <p class="text-muted-foreground">Provide examples of past minutes for the AI to learn the style.</p>
+            </div>
+            <div id="drop-zone-2" class="drop-zone">
+                <i data-lucide="file-text" class="w-16 h-16 mx-auto text-muted-foreground"></i>
+                <p class="mt-4 font-semibold">Drag & drop DOCX, PDF, or TXT files</p>
+                <p class="text-sm text-muted-foreground">or</p>
+                <button class="mt-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium">Browse Files</button>
+            </div>
+            <div class="mt-6 h-10">
+                <!-- File list will go here -->
+            </div>
+            <div class="flex justify-between mt-4">
+                <button onclick="goToStep(1)" class="bg-secondary text-secondary-foreground hover:bg-accent px-6 py-2 rounded-md font-semibold">Back</button>
+                <button onclick="goToStep(3)" class="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold">Next Step</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Final Configuration -->
+        <div id="step-3" class="wizard-step p-8">
+            <div class="text-center mb-6">
+                <p class="text-sm font-mono text-muted-foreground">STEP 3 OF 3</p>
+                <h2 class="text-2xl font-semibold">Final Configuration</h2>
+                <p class="text-muted-foreground">Give your meeting a title and add any special instructions.</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="meeting-title" class="block text-sm font-medium text-muted-foreground mb-1">Meeting Title</label>
+                    <input type="text" id="meeting-title" class="w-full bg-secondary border border-border rounded-md p-2" placeholder="e.g., Q3 Product Strategy Meeting">
+                </div>
+                <div>
+                    <label for="instructions" class="block text-sm font-medium text-muted-foreground mb-1">Special Instructions</label>
+                    <textarea id="instructions" class="w-full bg-secondary border border-border rounded-md p-2" rows="4" placeholder="e.g., Focus on action items and deadlines. Use a formal tone."></textarea>
+                </div>
+            </div>
+            <div class="flex justify-between mt-8">
+                <button onclick="goToStep(2)" class="bg-secondary text-secondary-foreground hover:bg-accent px-6 py-2 rounded-md font-semibold">Back</button>
+                <a href="minutesmaster_workspace_2.html" class="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-3 rounded-md font-bold flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    Generate Minutes
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- Theme Switcher --- //
+        const themeToggle = document.getElementById('theme-toggle');
+        const darkTheme = document.getElementById('dark-theme');
+        const lightTheme = document.getElementById('light-theme');
+        const htmlEl = document.documentElement;
+
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                htmlEl.classList.add('dark');
+                darkTheme.disabled = false;
+                lightTheme.disabled = true;
+            } else {
+                htmlEl.classList.remove('dark');
+                darkTheme.disabled = true;
+                lightTheme.disabled = false;
+            }
+        };
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        applyTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = htmlEl.classList.contains('dark') ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // --- Wizard Logic --- //
+        let currentStep = 1;
+        const steps = document.querySelectorAll('.wizard-step');
+
+        function goToStep(stepNumber) {
+            currentStep = stepNumber;
+            steps.forEach((step, index) => {
+                if ((index + 1) === currentStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        }
+
+        // --- Drag and Drop Logic --- //
+        ['drop-zone-1', 'drop-zone-2'].forEach(id => {
+            const dropZone = document.getElementById(id);
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                // Handle file drop logic here
+            });
+        });
+
+    </script>
+</body>
+</html>

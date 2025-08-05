@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinutesMaster AI - Hamburger Variation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link id="dark-theme" rel="stylesheet" href="theme_minutesmaster_1.css">
+    <link id="light-theme" rel="stylesheet" href="theme_minutesmaster_light_1.css" disabled>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono&family=Merriweather&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.4.1/dist/flowbite.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        :root { color-scheme: light dark; }
+        body { background-color: var(--background); color: var(--foreground); font-family: var(--font-sans); }
+        .main-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; grid-template-rows: auto 1fr auto; height: 100vh; gap: 1px; background-color: var(--border); }
+        .header, .footer { grid-column: 1 / 4; }
+        .panel { background-color: var(--card); padding: 1.5rem; overflow-y: auto; height: calc(100vh - 8rem); }
+        .panel-header { font-family: var(--font-mono); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        .transcript-speaker { font-weight: 700; color: var(--accent-foreground); background-color: var(--accent); padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-family: var(--font-mono); display: inline-block; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Main Workspace Grid -->
+    <div class="main-grid">
+        <!-- Header, Panes, Footer... -->
+        <header class="header bg-card border-b border-border flex items-center justify-between px-6 py-3">
+            <div class="flex items-center gap-4"><button class="p-2 rounded-md hover:bg-secondary"><i data-lucide="menu" class="text-muted-foreground"></i></button><h1 class="text-lg font-semibold">Q3 Planning Meeting</h1></div>
+            <div class="flex items-center gap-4"><button class="bg-accent text-accent-foreground hover:bg-accent/90 px-4 py-2 rounded-md text-sm font-medium">Export</button><button id="theme-toggle" class="p-2 rounded-md hover:bg-secondary"><i data-lucide="sun" class="hidden dark:inline-block"></i><i data-lucide="moon" class="inline-block dark:hidden"></i></button><button class="p-2 rounded-md hover:bg-secondary"><i data-lucide="settings" class="text-muted-foreground"></i></button></div>
+        </header>
+        <aside class="panel"><h2 class="panel-header">Transcript</h2></aside>
+        <main class="panel"><h2 class="panel-header">Generated Minutes</h2></main>
+        <aside class="panel"><h2 class="panel-header">Dictionary</h2></aside>
+        <footer class="footer bg-card border-t border-border flex items-center justify-between px-6 py-2 text-sm"><div class="flex items-center gap-4 text-muted-foreground"><span>Status: Ready</span></div><button class="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4"></i>Regenerate</button></footer>
+    </div>
+
+    <!-- Hamburger Navigation Drawer -->
+    <div id="nav-drawer" class="fixed top-0 left-0 z-40 h-screen p-4 overflow-y-auto transition-transform bg-card w-80 shadow-xl" aria-labelledby="nav-drawer-label">
+        <div class="flex justify-between items-center">
+            <h5 id="nav-drawer-label" class="text-base font-semibold text-muted-foreground uppercase">Menu</h5>
+            <button type="button" class="text-gray-400 bg-transparent hover:bg-secondary rounded-lg text-sm w-8 h-8 inline-flex items-center justify-center">
+                <i data-lucide="x" class="w-4 h-4"></i><span class="sr-only">Close menu</span>
+            </button>
+        </div>
+        <div class="py-4 overflow-y-auto">
+            <a href="#" class="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-3 rounded-md text-sm font-semibold flex items-center justify-center gap-2 mb-4">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>New Meeting
+            </a>
+            
+            <div class="mb-4">
+                <h6 class="text-sm font-semibold text-muted-foreground mb-2">Recent Meetings</h6>
+                <div class="relative mb-2">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-muted-foreground"></i>
+                    </div>
+                    <input type="search" id="search-meetings" class="block w-full p-2 ps-10 text-sm text-foreground border border-border rounded-lg bg-secondary focus:ring-primary focus:border-primary" placeholder="Filter meetings...">
+                </div>
+                <button id="dropdown-button" data-dropdown-toggle="dropdown" class="w-full flex justify-between items-center p-2 text-sm text-foreground border border-border rounded-lg bg-secondary hover:bg-accent" type="button">Sort by: Date Modified <i data-lucide="chevron-down" class="w-4 h-4"></i></button>
+                <!-- Dropdown menu -->
+                <div id="dropdown" class="z-10 hidden bg-card divide-y divide-border rounded-lg shadow w-full dark:bg-gray-700">
+                    <ul class="py-2 text-sm text-foreground" aria-labelledby="dropdown-button">
+                        <li><a href="#" class="block px-4 py-2 hover:bg-accent">Date Modified</a></li>
+                        <li><a href="#" class="block px-4 py-2 hover:bg-accent">Date Created</a></li>
+                        <li><a href="#" class="block px-4 py-2 hover:bg-accent">Name (A-Z)</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <ul class="space-y-2 font-medium">
+                <li><a href="#" class="flex items-center p-2 text-foreground rounded-lg hover:bg-accent group"><i data-lucide="file-text"></i><span class="ms-3">Q3 Planning Meeting</span></a></li>
+                <li><a href="#" class="flex items-center p-2 text-foreground rounded-lg hover:bg-accent group"><i data-lucide="file-text"></i><span class="ms-3">Project Phoenix Kick-off</span></a></li>
+                <li><a href="#" class="flex items-center p-2 text-foreground rounded-lg hover:bg-accent group"><i data-lucide="file-text"></i><span class="ms-3">Marketing Weekly Sync</span></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="bg-background/80 backdrop-blur-sm fixed inset-0 z-30"></div>
+
+    <script>
+        lucide.createIcons();
+        // Theme switcher logic would be here
+    </script>
+</body>
+</html>

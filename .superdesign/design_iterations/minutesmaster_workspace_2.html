@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinutesMaster AI - Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link id="dark-theme" rel="stylesheet" href="theme_minutesmaster_1.css">
+    <link id="light-theme" rel="stylesheet" href="theme_minutesmaster_light_1.css" disabled>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono&family=Merriweather&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.4.1/dist/flowbite.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        :root {
+            color-scheme: light dark;
+        }
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-sans);
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            gap: 1px;
+            background-color: var(--border);
+        }
+        .header, .footer {
+            grid-column: 1 / 4;
+        }
+        .panel {
+            background-color: var(--card);
+            padding: 1.5rem;
+            overflow-y: auto;
+            height: calc(100vh - 8rem);
+        }
+        .panel-header {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted-foreground);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .transcript-speaker {
+            font-weight: 700;
+            color: var(--accent-foreground);
+            background-color: var(--accent);
+            padding: 0.1rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: var(--font-mono);
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="main-grid">
+        <!-- Header -->
+        <header class="header bg-card border-b border-border flex items-center justify-between px-6 py-3">
+            <div class="flex items-center gap-4">
+                <i data-lucide="menu" class="text-muted-foreground"></i>
+                <h1 class="text-lg font-semibold">Q3 Planning Meeting</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="bg-accent text-accent-foreground hover:bg-accent/90 px-4 py-2 rounded-md text-sm font-medium">Export</button>
+                <button id="theme-toggle" class="p-2 rounded-md hover:bg-secondary">
+                    <i data-lucide="sun" class="hidden dark:inline-block"></i>
+                    <i data-lucide="moon" class="inline-block dark:hidden"></i>
+                </button>
+                <i data-lucide="settings" class="text-muted-foreground"></i>
+            </div>
+        </header>
+
+        <!-- Panes -->
+        <aside class="panel"><h2 class="panel-header">Transcript</h2></aside>
+        <main class="panel"><h2 class="panel-header">Generated Minutes</h2></main>
+        <aside class="panel"><h2 class="panel-header">Dictionary</h2></aside>
+
+        <!-- Footer -->
+        <footer class="footer bg-card border-t border-border flex items-center justify-between px-6 py-2 text-sm">
+            <div class="flex items-center gap-4 text-muted-foreground"><span>Status: Ready</span></div>
+            <button class="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4"></i>Regenerate</button>
+        </footer>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const darkTheme = document.getElementById('dark-theme');
+        const lightTheme = document.getElementById('light-theme');
+        const htmlEl = document.documentElement;
+
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                htmlEl.classList.add('dark');
+                darkTheme.disabled = false;
+                lightTheme.disabled = true;
+            } else {
+                htmlEl.classList.remove('dark');
+                darkTheme.disabled = true;
+                lightTheme.disabled = false;
+            }
+        };
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        applyTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = htmlEl.classList.contains('dark') ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    </script>
+</body>
+</html>
