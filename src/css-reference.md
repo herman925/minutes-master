@@ -229,6 +229,15 @@ Our shadow system creates consistent depth and hierarchy across the interface.
 }
 ```
 
+### Navigation Icons
+
+The header uses minimalist icon buttons for quick actions:
+
+- A hamburger `Menu` icon toggles the minutes history sidebar.
+- A `Settings` gear opens the API configuration dialog.
+
+Both are implemented as ghost buttons with `p-2` spacing and use `text-muted-foreground` for subtle emphasis.
+
 ## Component-Specific Styles
 
 ### Typography Components

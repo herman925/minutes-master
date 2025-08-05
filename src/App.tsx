@@ -3,6 +3,7 @@ import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import WorkspaceLayout from '@/components/WorkspaceLayout'
 import SetupWizard from '@/components/SetupWizard'
+import type { GeneratedMinutes } from '@/types'
 
 interface DictionaryEntry {
   id: string
@@ -30,26 +31,13 @@ interface SampleMinute {
   organization?: string
 }
 
-interface GeneratedMinutes {
-  title: string
-  date: string
-  attendees: string[]
-  agenda: string[]
-  keyDecisions: string[]
-  actionItems: Array<{
-    task: string
-    assignee: string
-    dueDate: string
-  }>
-  nextSteps: string[]
-}
-
 function App() {
   const [dictionary, setDictionary] = useKV<DictionaryEntry[]>('user-dictionary', [])
   const [userInstructions, setUserInstructions] = useKV<UserInstruction[]>('user-instructions', [])
   const [sampleMinutes, setSampleMinutes] = useKV<SampleMinute[]>('sample-minutes', [])
   const [darkMode, setDarkMode] = useKV<boolean>('dark-mode', false)
-  const [hasCompletedWizard, setHasCompletedWizard] = useKV<boolean>('wizard-completed', false)
+  const [meetingHistory, setMeetingHistory] = useKV<GeneratedMinutes[]>('meeting-history', [])
+  const [hasCompletedWizard, setHasCompletedWizard] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [generatedMinutes, setGeneratedMinutes] = useState<GeneratedMinutes | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -130,6 +118,10 @@ function App() {
 
       const minutes = JSON.parse(response)
       setGeneratedMinutes(minutes)
+      setMeetingHistory(prev => {
+        const history = Array.isArray(prev) ? prev : []
+        return [...history, minutes]
+      })
       setProgress(100)
 
       toast.success('Meeting minutes generated successfully!')
@@ -269,6 +261,7 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
           onResetToWizard={resetApp}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
+          meetingHistory={meetingHistory}
         />
       )}
     </>
