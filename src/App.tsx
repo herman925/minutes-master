@@ -7,17 +7,35 @@ import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { FileText, Settings, BookOpen, Download, Sparkles } from '@phosphor-icons/react'
+import { FileText, Settings, BookOpen, Download, Sparkles, Upload, Key, User } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import DictionaryManager from '@/components/DictionaryManager'
 import MinutesPreview from '@/components/MinutesPreview'
+import FileUploader from '@/components/FileUploader'
+import UserInstructions from '@/components/UserInstructions'
+import ApiManager from '@/components/ApiManager'
 
 interface DictionaryEntry {
   id: string
   term: string
   definition: string
   context?: string
+}
+
+interface UserInstruction {
+  id: string
+  title: string
+  category: string
+  instruction: string
+  priority: 'low' | 'medium' | 'high'
+}
+
+interface UploadedFile {
+  id: string
+  name: string
+  size: number
+  type: 'sample' | 'transcript' | 'audio' | 'video'
+  content?: string
 }
 
 interface GeneratedMinutes {
@@ -36,12 +54,32 @@ interface GeneratedMinutes {
 
 function App() {
   const [dictionary, setDictionary] = useKV<DictionaryEntry[]>('user-dictionary', [])
+  const [userInstructions, setUserInstructions] = useKV<UserInstruction[]>('user-instructions', [])
   const [sampleMinutes, setSampleMinutes] = useKV<string>('sample-minutes', '')
+  const [uploadedFiles, setUploadedFiles] = useKV<UploadedFile[]>('uploaded-files', [])
   const [transcript, setTranscript] = useState('')
   const [generatedMinutes, setGeneratedMinutes] = useState<GeneratedMinutes | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [activeTab, setActiveTab] = useState('transcript')
+  const [activeTab, setActiveTab] = useState('upload')
+
+  const handleFilesUploaded = (files: UploadedFile[], combinedTranscription?: string) => {
+    setUploadedFiles(current => [...current, ...files])
+    
+    if (combinedTranscription) {
+      setTranscript(combinedTranscription)
+      toast.success('Files processed and transcript extracted')
+    }
+    
+    // Extract sample minutes from uploaded files
+    const sampleFiles = files.filter(f => f.type === 'sample' && f.content)
+    if (sampleFiles.length > 0) {
+      const combinedSamples = sampleFiles
+        .map(f => `--- ${f.name} ---\n${f.content}`)
+        .join('\n\n')
+      setSampleMinutes(combinedSamples)
+    }
+  }
 
   const generateMinutes = async () => {
     if (!transcript.trim()) {
@@ -58,9 +96,20 @@ function App() {
         ? `\n\nCustom terminology:\n${dictionary.map(entry => `${entry.term}: ${entry.definition}${entry.context ? ` (${entry.context})` : ''}`).join('\n')}`
         : ''
 
+      // Build instructions context
+      const instructionsContext = userInstructions.length > 0
+        ? `\n\nUser Instructions (follow these rules):\n${userInstructions
+            .sort((a, b) => {
+              const priorityOrder = { high: 3, medium: 2, low: 1 }
+              return priorityOrder[b.priority] - priorityOrder[a.priority]
+            })
+            .map(inst => `[${inst.category}] ${inst.title}: ${inst.instruction}`)
+            .join('\n')}`
+        : ''
+
       // Build sample context
       const sampleContext = sampleMinutes 
-        ? `\n\nPlease follow this format and style:\n${sampleMinutes.substring(0, 1000)}...`
+        ? `\n\nPlease follow this format and style:\n${sampleMinutes.substring(0, 1500)}...`
         : ''
 
       setProgress(30)
@@ -70,13 +119,13 @@ function App() {
       Structure the output as a JSON object with these fields:
       - title: Meeting title/subject
       - date: Meeting date (if mentioned, otherwise use today's date)
-      - attendees: Array of participant names
+      - attendees: Array of participant names (extract from transcript speakers)
       - agenda: Array of main topics discussed
       - keyDecisions: Array of important decisions made
       - actionItems: Array of objects with task, assignee, and dueDate
       - nextSteps: Array of follow-up items
 
-      Make the minutes professional, concise, and well-organized.${dictContext}${sampleContext}
+      Make the minutes professional, concise, and well-organized.${dictContext}${instructionsContext}${sampleContext}
 
       Transcript:
       ${transcript}`
@@ -135,6 +184,13 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
     toast.success('Minutes exported successfully!')
   }
 
+  const clearAllData = () => {
+    setUploadedFiles([])
+    setTranscript('')
+    setGeneratedMinutes(null)
+    toast.success('All data cleared')
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -152,11 +208,23 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl font-bold text-primary">{uploadedFiles.length}</div>
+              <div className="text-sm text-muted-foreground">Files Uploaded</div>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-primary">{dictionary.length}</div>
               <div className="text-sm text-muted-foreground">Custom Terms</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl font-bold text-primary">{userInstructions.length}</div>
+              <div className="text-sm text-muted-foreground">User Rules</div>
             </CardContent>
           </Card>
           <Card>
@@ -186,7 +254,11 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="upload" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Upload
+            </TabsTrigger>
             <TabsTrigger value="transcript" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Transcript
@@ -194,6 +266,10 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
             <TabsTrigger value="dictionary" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Dictionary
+            </TabsTrigger>
+            <TabsTrigger value="instructions" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Instructions
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -204,6 +280,13 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
               Preview
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="upload">
+            <FileUploader 
+              onFilesUploaded={handleFilesUploaded}
+              isProcessing={isGenerating}
+            />
+          </TabsContent>
 
           <TabsContent value="transcript" className="space-y-6">
             <Card>
@@ -249,6 +332,13 @@ Mike: Let's start with the user feedback analysis..."
             />
           </TabsContent>
 
+          <TabsContent value="instructions">
+            <UserInstructions 
+              instructions={userInstructions}
+              setInstructions={setUserInstructions}
+            />
+          </TabsContent>
+
           <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
@@ -282,11 +372,18 @@ ACTION ITEMS:
                   onChange={(e) => setSampleMinutes(e.target.value)}
                   className="min-h-[300px] font-mono text-sm"
                 />
-                <div className="mt-4 text-sm text-muted-foreground">
-                  {sampleMinutes.length} characters
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    {sampleMinutes.length} characters
+                  </div>
+                  <Button onClick={clearAllData} variant="outline">
+                    Clear All Data
+                  </Button>
                 </div>
               </CardContent>
             </Card>
+
+            <ApiManager />
           </TabsContent>
 
           <TabsContent value="preview">
