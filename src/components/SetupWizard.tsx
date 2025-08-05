@@ -522,7 +522,7 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
                   </div>
                 </motion.div>
               )}
-            </div>
+            </AnimatePresence>
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-border">
