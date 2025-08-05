@@ -65,7 +65,7 @@ function App() {
   }, [darkMode])
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode)
+    setDarkMode(prev => !prev)
   }
 
   const generateMinutes = async () => {

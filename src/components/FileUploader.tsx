@@ -153,11 +153,10 @@ Content: ${base64.substring(0, 1000)}...`
   }
 
   const processFiles = () => {
-    // Separate files by type
-    const sampleFiles = uploadedFiles.filter(f => f.type === 'sample')
-    const transcriptFiles = uploadedFiles.filter(f => f.type === 'transcript' || f.type === 'audio' || f.type === 'video')
-    
-    // Combine transcript content
+    const transcriptFiles = uploadedFiles.filter(f =>
+      ['transcript', 'audio', 'video'].includes(f.type)
+    )
+
     const combinedTranscription = transcriptFiles
       .map(f => `--- ${f.name} ---\n${f.content || ''}`)
       .join('\n\n')
