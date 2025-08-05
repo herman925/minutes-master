@@ -247,33 +247,33 @@
     background: var(--accent);
   }
   
-  /* Workspace-specific styles */
-  .workspace-grid {
+  /* Workspace-specific styles - Match HTML structure exactly */
+  .main-grid {
     @apply grid h-screen gap-px bg-border;
     grid-template-columns: 1fr 2fr 1fr;
     grid-template-rows: auto 1fr auto;
   }
   
-  .workspace-panel {
-    @apply bg-card p-6 overflow-y-auto custom-scrollbar;
-  }
-  
-  .workspace-header {
-    @apply bg-card border-b border-border flex items-center justify-between px-6 py-3;
+  .header, .footer {
     grid-column: 1 / 4;
   }
   
-  .workspace-footer {
-    @apply bg-card border-t border-border flex items-center justify-between px-6 py-2 text-sm;
-    grid-column: 1 / 4;
+  .panel {
+    @apply bg-card overflow-y-auto custom-scrollbar;
+    padding: 1.5rem;
+    height: calc(100vh - 8rem); /* Adjust based on header/footer height */
   }
   
   .panel-header {
     @apply font-mono text-sm uppercase tracking-wide text-muted-foreground mb-4 pb-2 border-b border-border;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   
   .transcript-speaker {
-    @apply font-bold text-primary font-mono;
+    @apply font-bold text-accent-foreground bg-accent px-2 py-1 rounded font-mono inline-block;
   }
   
   .dictionary-term {
@@ -282,6 +282,10 @@
   
   .rich-text-editor h2 {
     @apply text-xl font-semibold mt-6 mb-2;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
   }
   
   .rich-text-editor ul {

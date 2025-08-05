@@ -179,8 +179,16 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
     meetingTitle: string
     instructions: string
   }) => {
-    // Set transcript from wizard
-    setTranscript(wizardData.transcript)
+    // Set transcript from wizard - if empty, add sample data
+    const sampleTranscript = wizardData.transcript || `Jane (00:02): Alright team, let's kick off the Q3 planning. First on the agenda is the product roadmap. John, can you give us an update?
+
+John (00:15): Thanks, Jane. We've finalized the specs for Project Phoenix. The key challenge is the integration with the new API. We'll need to allocate more resources to backend development. I've updated the JIRA ticket.
+
+Sarah (00:35): On the marketing side, we're preparing a campaign for the v2.1 launch. We need to define the target ICP and messaging. I suggest we form a small task force.
+
+Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, please sync up and propose a plan by EOD Friday.`
+
+    setTranscript(sampleTranscript)
     
     // Add samples to sample pool
     const newSamples = wizardData.samples.map(file => ({

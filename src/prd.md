@@ -84,12 +84,13 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 
 #### Transcript Input and Processing
 - **Comprehensive Multi-Format Support**: 
-  - **Pre-Created Transcript Files**: TXT, MD (Markdown), DOCX, PDF, RTF, ODT with intelligent format detection
-  - **Structured Data Files**: CSV, TSV for tabular meeting notes and structured transcripts
-  - **Document Processing**: Advanced OCR for scanned PDFs and image-based documents
-  - **Audio/Video Transcription**: MP3, MP4, WAV, M4A, WEBM with AI transcription via Whisper API
-  - **Real-Time Input**: Rich text editor with formatting preservation, spell-check, and auto-save
-  - **Batch Processing**: Handle multiple transcript files simultaneously with automatic format detection and queue management
+  - **Pre-Created Transcript Files**: TXT, MD (Markdown), DOCX, PDF, RTF, ODT with intelligent format detection and content extraction
+  - **Structured Data Files**: CSV, TSV for tabular meeting notes and structured transcripts with automatic parsing
+  - **Document Processing**: Advanced OCR for scanned PDFs and image-based documents with high accuracy text extraction
+  - **Audio/Video Transcription**: MP3, MP4, WAV, M4A, WEBM with AI transcription via Whisper API and speaker identification
+  - **Real-Time Input**: Rich text editor with formatting preservation, spell-check, auto-save, and collaborative editing
+  - **Batch Processing**: Handle multiple transcript files simultaneously with automatic format detection, queue management, and progress tracking
+  - **Copy-Paste Support**: Direct pasting of transcript content from any source with intelligent formatting detection and cleanup
 - **Intelligent File Processing**:
   - **Automatic Format Detection**: AI identifies file type and selects optimal processing method for maximum content extraction
   - **Content Extraction Engine**: Advanced parsing for structured documents, embedded metadata, and formatting preservation
