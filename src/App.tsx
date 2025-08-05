@@ -29,6 +29,7 @@ import ApiManager from '@/components/ApiManager'
 import TranscriptInput from '@/components/TranscriptInput'
 import SamplePool from '@/components/SamplePool'
 import WorkspaceLayout from '@/components/WorkspaceLayout'
+import SetupWizard from '@/components/SetupWizard'
 
 interface DictionaryEntry {
   id: string
@@ -81,6 +82,7 @@ function App() {
   const [progress, setProgress] = useState(0)
   const [activeTab, setActiveTab] = useState('samples')
   const [useWorkspaceView, setUseWorkspaceView] = useState(false)
+  const [showSetupWizard, setShowSetupWizard] = useState(false)
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -201,6 +203,52 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
     toast.success('Minutes exported successfully!')
   }
 
+  const handleWizardComplete = (wizardData: {
+    transcript: string
+    samples: File[]
+    meetingTitle: string
+    instructions: string
+  }) => {
+    // Set transcript from wizard
+    setTranscript(wizardData.transcript)
+    
+    // Add samples to sample pool
+    const newSamples = wizardData.samples.map(file => ({
+      id: Math.random().toString(),
+      name: file.name,
+      content: `Sample content from ${file.name}`, // In real app, you'd read the file
+      tags: ['wizard-upload'],
+      dateAdded: new Date().toISOString(),
+      fileSize: file.size,
+      meetingType: 'General',
+      organization: 'Default'
+    }))
+    
+    setSampleMinutes(prev => [...(Array.isArray(prev) ? prev : []), ...newSamples])
+    
+    // Add instructions if provided
+    if (wizardData.instructions) {
+      const newInstruction = {
+        id: Math.random().toString(),
+        title: `Instructions for ${wizardData.meetingTitle}`,
+        category: 'Meeting Specific',
+        instruction: wizardData.instructions,
+        priority: 'high' as const
+      }
+      setUserInstructions(prev => [...(Array.isArray(prev) ? prev : []), newInstruction])
+    }
+    
+    // Close wizard and generate minutes
+    setShowSetupWizard(false)
+    
+    // Auto-generate if we have content
+    setTimeout(() => {
+      generateMinutes()
+    }, 500)
+    
+    toast.success(`Setup complete for "${wizardData.meetingTitle}"!`)
+  }
+
   const clearAllData = () => {
     setTranscript('')
     setGeneratedMinutes(null)
@@ -209,7 +257,14 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
 
   return (
     <>
-      {useWorkspaceView ? (
+      {showSetupWizard ? (
+        <SetupWizard
+          onComplete={handleWizardComplete}
+          onCancel={() => setShowSetupWizard(false)}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
+      ) : useWorkspaceView ? (
         <WorkspaceLayout
           transcript={transcript}
           setTranscript={setTranscript}
@@ -261,11 +316,19 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
               </p>
               <div className="flex items-center justify-center gap-4">
                 <Button 
+                  onClick={() => setShowSetupWizard(true)}
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                  size="lg"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Setup Wizard
+                </Button>
+                <Button 
                   onClick={() => setUseWorkspaceView(true)}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Layout className="h-4 w-4 mr-2" />
-                  Switch to Workspace View
+                  Workspace View
                 </Button>
                 <Button
                   onClick={toggleDarkMode}
@@ -448,6 +511,18 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
                         </div>
                         <Button onClick={clearAllData} variant="outline">
                           Clear Session
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">Setup Wizard</div>
+                          <div className="text-sm text-muted-foreground">
+                            Start fresh with the guided setup process
+                          </div>
+                        </div>
+                        <Button onClick={() => setShowSetupWizard(true)} className="bg-accent hover:bg-accent/90">
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Launch Wizard
                         </Button>
                       </div>
                       <div className="flex items-center justify-between p-4 border rounded-lg">

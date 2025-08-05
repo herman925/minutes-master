@@ -116,7 +116,25 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 - **Version management**: Track revisions and maintain approval workflows
 - **Accessibility compliance**: WCAG-compliant outputs for inclusive documentation
 
-### Technical Integration Features
+#### Setup Wizard and User Experience
+- **Guided Setup Wizard**: Step-by-step onboarding for new users and projects
+  - Step 1: Transcript upload with drag-and-drop interface and format validation
+  - Step 2: Sample pool creation with batch upload and automatic tagging
+  - Step 3: Configuration with meeting title and custom instructions
+- **Dual Interface Modes**:
+  - **Dashboard View**: Tabbed interface for comprehensive feature access
+  - **Workspace View**: Professional three-panel layout for advanced editing
+- **Progressive Enhancement**: Interface adapts based on user expertise and needs
+- **Theme System**: Light and dark modes with professional color palettes
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+
+#### Enhanced UI Components
+- **File Upload Zones**: Sophisticated drag-and-drop with progress indicators
+- **Rich Text Editing**: In-place editing of generated minutes with real-time preview
+- **Smart Tabs**: Dynamic tab system with badges and state indicators
+- **Progress Tracking**: Visual feedback during AI processing and file operations
+- **Status Dashboard**: Real-time overview of setup completion and system status
+- **Interactive Previews**: Side-by-side comparison of transcript and generated minutes
 
 #### API Management and Security
 - **Multi-provider architecture**: Support for OpenRouter, OpenAI, Anthropic, and local models
@@ -161,22 +179,88 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 - **Efficient productivity**: Interface design emphasizes workflow efficiency and clear information hierarchy
 
 ### Color Strategy
-- **Primary**: Deep blue (`oklch(0.45 0.15 250)`) - conveys professionalism and trust
-- **Accent**: Warm orange (`oklch(0.72 0.15 45)`) - highlights actions and important elements
-- **Background**: Light neutral (`oklch(0.98 0.02 250)`) - provides clean, readable foundation
-- **Muted tones**: Subtle blues and grays for supporting elements and secondary information
+- **OKLCH Color System**: Modern color space for consistent, perceptual color relationships
+- **Light Mode Palette**:
+  - Primary: `oklch(0.65 0.2 150)` - Professional green for primary actions
+  - Accent: `oklch(0.7 0.22 155)` - Vibrant green for highlights and attention
+  - Background: `oklch(0.98 0.01 110)` - Warm white for comfortable reading
+  - Foreground: `oklch(0.15 0.02 110)` - Deep charcoal for optimal contrast
+- **Dark Mode Palette**:
+  - Primary: `oklch(0.85 0 0)` - High contrast neutral for accessibility
+  - Accent: `oklch(0.3 0 0)` - Subdued accent for reduced eye strain
+  - Background: `oklch(0.10 0 0)` - Deep black for professional appearance
+  - Foreground: `oklch(0.95 0 0)` - Near white for excellent readability
+- **Color Psychology**: Green primary conveys growth, success, and reliability
+- **Accessibility**: All color combinations meet WCAG AA contrast requirements (4.5:1)
 
 ### Typography System
-- **Primary Font**: Inter - Modern, readable sans-serif for UI elements and body text
-- **Monospace Font**: JetBrains Mono - For code, transcripts, and technical content
-- **Clear hierarchy**: Distinct sizing and weights for headers, body text, and captions
-- **Optimal readability**: 1.5x line height for body text with generous spacing
+- **Primary Font**: Inter - Modern, readable sans-serif optimized for digital screens
+- **Monospace Font**: JetBrains Mono - Technical content, code blocks, and data display
+- **Font Loading**: Google Fonts with font-display: swap for optimal performance
+- **Typographic Scale**: Mathematical progression for consistent visual rhythm
+- **Line Height**: 1.5x for body text, tighter for headings, optimized for readability
 
-### Component Strategy
-- **shadcn/ui components**: Consistent, accessible component library
-- **Phosphor Icons**: Clean, modern icon set for actions and navigation
-- **Card-based layout**: Organized content sections with clear boundaries
-- **Progressive disclosure**: Advanced features revealed as needed
+### Visual Hierarchy & Layout
+- **Grid System**: CSS Grid for complex layouts, Flexbox for component alignment
+- **Spacing System**: Consistent 0.25rem base unit with mathematical progression
+- **Border Radius**: 0.5rem base with calculated variants for different element sizes
+- **Shadow System**: Layered shadows with different opacity levels for depth perception
+- **Motion Design**: Subtle animations (200-400ms) that enhance usability without distraction
+
+---
+
+## User Workflow & Interface Design
+
+### Two-Stage Application Flow
+
+#### Stage 1: Setup Wizard (New Projects)
+**Purpose**: Guide users through initial setup with progressive disclosure
+**Layout**: Centered modal-style interface with step navigation
+
+1. **Step 1: Transcript Upload**
+   - Large drag-and-drop zone with visual feedback
+   - Support for TXT, MD, DOCX files and audio formats (MP3, MP4, WAV)
+   - Real-time file validation and processing indicators
+   - Alternative text input area for direct paste
+
+2. **Step 2: Sample Pool Creation**
+   - Batch file upload with preview thumbnails
+   - Automatic file categorization and tagging
+   - Optional step with clear skip functionality
+   - Progress tracking for file processing
+
+3. **Step 3: Final Configuration**
+   - Meeting title input with smart suggestions
+   - Custom instructions text area with templates
+   - Setup summary with completion indicators
+   - One-click generation to workspace view
+
+#### Stage 2: Main Application Interface
+
+##### Dashboard View (Default)
+**Purpose**: Comprehensive feature access with organized workflow
+**Layout**: Tabbed interface with full-width content areas
+
+- **Sample Pool Tab**: Manage and organize sample minutes library
+- **Transcript Tab**: Input and edit transcript content with generation controls
+- **Dictionary Tab**: Define and manage custom terminology
+- **Instructions Tab**: Set personalized AI generation rules
+- **Settings Tab**: Theme, API management, and data controls
+- **Preview Tab**: View and export generated minutes
+
+##### Workspace View (Advanced)
+**Purpose**: Professional editing environment for power users
+**Layout**: Three-panel grid layout inspired by IDE interfaces
+
+- **Left Panel**: Live transcript view with speaker identification
+- **Center Panel**: Generated minutes with rich text editing
+- **Right Panel**: Tabbed customization tools (Dictionary/Instructions)
+- **Header/Footer**: Project context and generation controls
+
+### Interface Transitions
+- **Smooth animations**: 300ms duration with easing for professional feel
+- **State preservation**: Maintain user data across interface switches
+- **Context awareness**: Interface adapts based on available content and user progress
 
 ---
 
