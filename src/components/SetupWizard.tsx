@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import { Textarea } from './ui/textarea'
+import { Progress } from './ui/progress'
+import { Badge } from './ui/badge'
 import { 
   UploadCloud, 
   FileText, 
@@ -558,7 +558,6 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
             </div>
           </div>
         </motion.div>
-      </motion.div>
     </div>
   )
 }
