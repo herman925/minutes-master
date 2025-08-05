@@ -8,7 +8,9 @@ import {
   Download, 
   Sparkles, 
   Menu,
-  ArrowLeft
+  ArrowLeft,
+  Sun,
+  Moon
 } from '@phosphor-icons/react'
 
 interface DictionaryEntry {
@@ -40,6 +42,17 @@ interface GeneratedMinutes {
   nextSteps: string[]
 }
 
+interface SampleMinute {
+  id: string
+  name: string
+  content: string
+  tags: string[]
+  dateAdded: string
+  fileSize: number
+  meetingType?: string
+  organization?: string
+}
+
 interface WorkspaceLayoutProps {
   transcript: string
   setTranscript: (transcript: string) => void
@@ -47,9 +60,15 @@ interface WorkspaceLayoutProps {
   onGenerate: () => void
   isGenerating: boolean
   dictionary: DictionaryEntry[]
+  setDictionary: (dictionary: DictionaryEntry[]) => void
   userInstructions: UserInstruction[]
+  setUserInstructions: (instructions: UserInstruction[]) => void
+  sampleMinutes: SampleMinute[]
+  setSampleMinutes: (samples: SampleMinute[]) => void
   onExport: () => void
-  onBackToMain?: () => void
+  onResetToWizard: () => void
+  darkMode: boolean
+  onToggleDarkMode: () => void
 }
 
 export default function WorkspaceLayout({
@@ -59,9 +78,15 @@ export default function WorkspaceLayout({
   onGenerate,
   isGenerating,
   dictionary,
+  setDictionary,
   userInstructions,
+  setUserInstructions,
+  sampleMinutes,
+  setSampleMinutes,
   onExport,
-  onBackToMain
+  onResetToWizard,
+  darkMode,
+  onToggleDarkMode
 }: WorkspaceLayoutProps) {
   const [activeRightTab, setActiveRightTab] = useState('dictionary')
 
@@ -100,18 +125,16 @@ export default function WorkspaceLayout({
       {/* Header */}
       <header className="workspace-header">
         <div className="flex items-center gap-4">
-          {onBackToMain && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBackToMain}
-              className="mr-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          )}
           <Menu className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg font-semibold">{generatedMinutes?.title || 'New Meeting Minutes'}</h1>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-lg shadow-sm">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold">MinutesMaster AI</h1>
+              <p className="text-xs text-muted-foreground">{generatedMinutes?.title || 'New Meeting Minutes'}</p>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <Button 
@@ -123,7 +146,21 @@ export default function WorkspaceLayout({
           >
             Export
           </Button>
-          <Settings className="h-5 w-5 text-muted-foreground cursor-pointer" />
+          <Button
+            onClick={onToggleDarkMode}
+            variant="ghost"
+            size="sm"
+          >
+            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+          <Button
+            onClick={onResetToWizard}
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 

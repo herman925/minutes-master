@@ -190,83 +190,68 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-3xl"
+        className="w-full max-w-3xl bg-card rounded-lg border border-border shadow-lg"
       >
-        <Card className="card-shadow-lg overflow-hidden">
-          {/* Header */}
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b border-border">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-2xl gradient-text">MinutesMaster AI</CardTitle>
-                <p className="text-muted-foreground font-mono text-sm">Setup Wizard</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onToggleDarkMode}
-                  className="p-2"
-                >
-                  {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCancel}
-                  className="text-muted-foreground"
-                >
-                  <XCircle className="h-4 w-4" />
-                </Button>
-              </div>
+        {/* Header */}
+        <div className="p-6 border-b border-border flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-lg shadow-sm">
+              <Sparkles className="h-6 w-6 text-white" />
             </div>
-            
-            {/* Progress Indicator */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <span>Step {currentStep} of {WIZARD_STEPS.length}</span>
-                <span>{Math.round((currentStep / WIZARD_STEPS.length) * 100)}% Complete</span>
-              </div>
-              <Progress value={(currentStep / WIZARD_STEPS.length) * 100} className="h-1" />
+            <div>
+              <h1 className="text-xl font-bold">MinutesMaster AI</h1>
+              <p className="text-sm text-muted-foreground">Setup Wizard</p>
             </div>
-
-            {/* Step Navigation */}
-            <div className="flex items-center gap-4 mt-4">
-              {WIZARD_STEPS.map((step, index) => (
-                <div key={step.id} className="flex items-center gap-2">
-                  <motion.div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-smooth ${
-                      currentStep === step.id
-                        ? 'bg-primary text-primary-foreground'
-                        : currentStep > step.id
-                        ? 'bg-accent text-accent-foreground'
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    {currentStep > step.id ? (
-                      <CheckCircle className="h-4 w-4" />
-                    ) : (
-                      step.id
-                    )}
-                  </motion.div>
-                  <div className="hidden md:block">
-                    <div className="text-sm font-medium">
-                      {step.title}
-                    </div>
-                  </div>
-                  {index < WIZARD_STEPS.length - 1 && (
-                    <div className="w-12 h-px bg-border mx-2" />
+          </div>
+          <Button onClick={onToggleDarkMode} variant="ghost" size="sm">
+            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        {/* Progress and Step Indicator */}
+        <div className="px-6 py-4 bg-muted/30">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+            <span>Step {currentStep} of {WIZARD_STEPS.length}</span>
+            <span>{Math.round((currentStep / WIZARD_STEPS.length) * 100)}% Complete</span>
+          </div>
+          <Progress value={(currentStep / WIZARD_STEPS.length) * 100} className="h-1" />
+          
+          {/* Step Navigation */}
+          <div className="flex items-center gap-4 mt-4">
+            {WIZARD_STEPS.map((step, index) => (
+              <div key={step.id} className="flex items-center gap-2">
+                <motion.div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-smooth ${
+                    currentStep === step.id
+                      ? 'bg-primary text-primary-foreground'
+                      : currentStep > step.id
+                      ? 'bg-accent text-accent-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  {currentStep > step.id ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    step.id
                   )}
+                </motion.div>
+                <div className="hidden md:block">
+                  <div className="text-sm font-medium">
+                    {step.title}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardHeader>
+                {index < WIZARD_STEPS.length - 1 && (
+                  <div className="w-12 h-px bg-border mx-2" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
-          <CardContent className="p-8">
+        <div className="p-8">
             <AnimatePresence mode="wait">
               {/* Step 1: Upload Transcript */}
               {currentStep === 1 && (
@@ -537,7 +522,7 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
+            </div>
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-border">
@@ -569,8 +554,7 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </div>
       </motion.div>
     </div>
   )
