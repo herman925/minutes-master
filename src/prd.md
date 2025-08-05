@@ -97,7 +97,6 @@ Transform meeting transcripts into professional, customized meeting minutes usin
   - **Quality Assessment**: Automatic evaluation of transcript completeness, clarity, and suitability for minutes generation
   - **Format Standardization**: Seamless conversion between different transcript formats with content validation
   - **Error Detection**: Identify and flag potential transcription errors, missing content, or formatting issues
-- **Enhanced Processing Features**:
   - **Advanced Speaker Diarization**: Automatic identification, labeling, and role assignment for meeting participants
   - **Transcript Enhancement**: AI-powered cleanup of transcription errors, formatting inconsistencies, and audio artifacts
   - **Smart Content Segmentation**: Automatic detection of agenda items, discussion topics, decision points, and action items

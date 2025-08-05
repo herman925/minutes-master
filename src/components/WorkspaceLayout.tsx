@@ -185,7 +185,7 @@ export default function WorkspaceLayout({
               size="sm"
               className="p-2"
             >
-              {darkMode ? <Sun className="hidden dark:inline-block" /> : <Moon className="inline-block dark:hidden" />}
+              {darkMode ? <Sun /> : <Moon />}
             </Button>
             <Dialog>
               <DialogTrigger asChild>

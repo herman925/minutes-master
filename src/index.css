@@ -267,10 +267,6 @@
     @apply font-mono text-sm uppercase tracking-wide text-muted-foreground mb-4 pb-2 border-b border-border;
   }
   
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  
   .transcript-speaker {
     @apply font-bold text-accent-foreground bg-accent px-2 py-1 rounded font-mono inline-block;
   }
@@ -281,28 +277,9 @@
   
   .rich-text-editor h2 {
     @apply text-xl font-semibold mt-6 mb-2;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-  .panel-header {
-    @apply font-mono text-sm uppercase tracking-wide text-muted-foreground mb-4 pb-2 border-b border-border;
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
   
-  .transcript-speaker {
-    @apply font-bold text-accent-foreground bg-accent px-2 py-1 rounded font-mono inline-block;
+  .rich-text-editor ul {
+    @apply list-disc pl-6;
   }
-  
-  .dictionary-term {
-    @apply bg-secondary p-4 rounded-lg border border-border mb-4;
-  }
-  
-  .rich-text-editor h2 {
-    @apply text-xl font-semibold mt-6 mb-2;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 1.5rem;
+}
