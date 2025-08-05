@@ -210,6 +210,8 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
           <Button onClick={onToggleDarkMode} variant="ghost" size="sm">
             {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+        </div>
+
         {/* Progress and Step Indicator */}
         <div className="px-6 py-4 bg-muted/30">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
