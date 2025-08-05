@@ -1,33 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
-import { 
-  FileText, 
-  Settings, 
-  BookOpen, 
-  Download, 
-  Sparkles, 
-  User,
-  FolderOpen,
-  TrendUp,
-  Zap,
-  Shield,
-  Layout,
-  Moon,
-  Sun
-} from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { motion } from 'framer-motion'
-import DictionaryManager from '@/components/DictionaryManager'
-import MinutesPreview from '@/components/MinutesPreview'
-import UserInstructions from '@/components/UserInstructions'
-import ApiManager from '@/components/ApiManager'
-import TranscriptInput from '@/components/TranscriptInput'
-import SamplePool from '@/components/SamplePool'
 import WorkspaceLayout from '@/components/WorkspaceLayout'
 import SetupWizard from '@/components/SetupWizard'
 
@@ -154,7 +127,6 @@ function App() {
 
       const minutes = JSON.parse(response)
       setGeneratedMinutes(minutes)
-      setActiveTab('preview')
       setProgress(100)
 
       toast.success('Meeting minutes generated successfully!')

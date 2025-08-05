@@ -56,22 +56,43 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 ### Core Workflow Features
 
 #### Sample Pool Management
-- **Curated sample library**: Build and manage a collection of organizational meeting minutes templates
-- **Multi-format sample upload**: Support for TXT, MD, PDF, DOCX sample minutes
-- **Sample categorization**: Tag samples by meeting type (board meetings, project reviews, team standups)
-- **Style analysis**: AI analyzes sample pool to understand organizational tone, structure, and formatting preferences
-- **Sample preview**: Visual preview of uploaded samples with metadata display
-- **Template suggestions**: AI-generated recommendations based on sample pool analysis
+- **Curated Sample Library**: Build and manage a comprehensive collection of organizational meeting minutes as style templates
+  - **Intelligent Pool Building**: AI analyzes uploaded samples to understand organizational patterns
+  - **Style DNA Extraction**: Deep analysis of tone, structure, terminology, and formatting preferences
+  - **Quality Scoring**: Automatic assessment of sample quality and usefulness for style replication
+- **Advanced Sample Upload and Organization**:
+  - **Multi-format support**: TXT, MD, PDF, DOCX sample minutes with metadata extraction
+  - **Smart categorization**: Automatic tagging by meeting type (board meetings, project reviews, team standups, client calls)
+  - **Organizational context**: Tag samples by department, seniority level, formality, and industry sector
+  - **Sample clustering**: AI groups similar samples for style consistency analysis
+- **Sample Pool Intelligence**:
+  - **Style synthesis**: AI combines patterns from multiple samples to create hybrid styles
+  - **Template generation**: Automatic creation of meeting minute templates based on sample analysis
+  - **Relevance matching**: Smart selection of most appropriate samples for each transcript
+  - **Continuous learning**: Pool improves with each generation and user feedback
+- **Sample Management Features**:
+  - **Visual preview**: Rich preview of uploaded samples with highlighted style elements
+  - **Metadata management**: Custom tags, meeting types, effectiveness ratings, and usage tracking
+  - **Version control**: Track changes to sample pool and maintain historical versions
+  - **Sample recommendations**: AI suggests improvements and additions to enhance style coverage
 
 #### Transcript Input and Processing
-- **Multi-input support**: 
-  - Direct text paste with rich text formatting
-  - File upload for TXT, MD, DOCX, PDF transcript files
-  - Audio/video upload (MP3, MP4, WAV, M4A) with AI transcription
-- **Speaker diarization**: Automatic identification and labeling of meeting participants
-- **Transcript enhancement**: AI cleanup of transcription errors and formatting inconsistencies
-- **Batch processing**: Handle multiple transcript files simultaneously
-- **Smart segmentation**: Automatic detection of agenda items, discussions, and decision points
+- **Comprehensive Multi-Format Support**: 
+  - **Text Files**: TXT, MD (Markdown), CSV for structured meeting notes
+  - **Document Files**: DOCX, PDF with OCR capability for scanned documents
+  - **Audio/Video Files**: MP3, MP4, WAV, M4A with AI transcription via Whisper
+  - **Direct Input**: Rich text paste with formatting preservation and real-time validation
+  - **Batch Upload**: Process multiple transcript files simultaneously with format detection
+- **Smart File Processing**:
+  - **Automatic format detection**: AI identifies file type and optimal processing method
+  - **Content extraction**: Advanced parsing for structured documents and embedded metadata
+  - **Quality validation**: Automatic assessment of transcript quality and completeness
+  - **Format conversion**: Seamless conversion between different transcript formats
+- **Enhanced Processing Features**:
+  - **Speaker diarization**: Automatic identification and labeling of meeting participants
+  - **Transcript enhancement**: AI cleanup of transcription errors and formatting inconsistencies
+  - **Smart segmentation**: Automatic detection of agenda items, discussions, and decision points
+  - **Content enrichment**: Addition of timestamps, speaker roles, and topic markers
 
 #### AI Generation Engine
 - **Contextual intelligence**: Deep understanding of meeting dynamics, roles, and organizational context
