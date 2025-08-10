@@ -233,7 +233,12 @@
   }
   
   .header, .footer {
-    grid-column: 1 / 4;
+    grid-column: 1 / -1;
+  }
+
+  /* Two-column layout variant when the right customization panel is hidden */
+  .main-grid--no-right {
+    grid-template-columns: 1fr 2fr;
   }
   
   .panel {

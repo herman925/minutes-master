@@ -1,10 +1,8 @@
----
+# Product Requirements Document (PRD): MinutesMaster AI
 
-# This document has moved
+This is the canonical PRD. Previous scattered copies have been consolidated here.
 
-The canonical Product Requirements Document now lives at `ref/PRD.md`.
-
-Please see that file for the up-to-date PRD.
+<!-- Consolidated from src/prd.md -->
 
 ## Overview
 
@@ -400,3 +398,5 @@ Transform meeting transcripts into professional, customized meeting minutes usin
 - **Multi-language Support**: International organization support
 
 This PRD serves as the foundation for MinutesMaster AI, ensuring all development aligns with user needs and business objectives while maintaining focus on professional quality and organizational customization.
+
+

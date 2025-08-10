@@ -10,7 +10,7 @@ import { Badge } from './ui/badge'
 import { 
   UploadCloud, 
   FileText, 
-  Sparkles, 
+  Sparkle, 
   Sun,
   Moon,
   File,
@@ -19,7 +19,7 @@ import {
   XCircle,
   ArrowLeft,
   ArrowRight,
-  Settings,
+  Gear,
   House
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -58,7 +58,7 @@ const WIZARD_STEPS = [
     id: 3,
     title: 'Final Configuration',
     description: 'Give your meeting a title and add any special instructions.',
-    icon: Settings
+    icon: Gear
   }
 ]
 
@@ -201,7 +201,7 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
         <div className="p-6 border-b border-border flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-lg shadow-sm">
-              <Sparkles className="h-6 w-6 text-white" />
+              <Sparkle className="h-6 w-6 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold">MinutesMaster AI</h1>
@@ -309,6 +309,8 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
                       accept=".txt,.md,.docx,.mp3,.mp4,.wav"
                       onChange={(e) => e.target.files && handleFileUpload(e.target.files, 'transcript')}
                       className="hidden"
+                      aria-label="Upload transcript file"
+                      title="Upload transcript file"
                     />
                   </div>
 
@@ -418,6 +420,8 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
                       multiple
                       onChange={(e) => e.target.files && handleFileUpload(e.target.files, 'samples')}
                       className="hidden"
+                      aria-label="Upload sample minutes files"
+                      title="Upload sample minutes files"
                     />
                   </div>
 

@@ -11,7 +11,7 @@ MinutesMaster AI is a web application for generating professional meeting minute
 
 ## Documentation
 
-- [Product Requirements](src/prd.md)
+- [Product Requirements](ref/PRD.md)
 - [CSS Design Reference](src/css-reference.md)
 
 ## Development
