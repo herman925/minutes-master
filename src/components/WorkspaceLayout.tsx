@@ -212,29 +212,29 @@ Content: ${base64.substring(0, 1000)}...`
 
         {/* Left Panel - Transcript */}
         <aside className="panel">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="panel-header mb-0 pb-0 border-b-0">Transcript</h2>
-            <div className="flex gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.md,.mp3,.wav,.m4a,.mp4,.mov,.webm,audio/*,video/*,text/*"
-                onChange={handleTranscriptUpload}
-                className="hidden"
-                disabled={isTranscriptUploading || isGenerating}
-              />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline"
-                size="sm"
-                disabled={isTranscriptUploading || isGenerating}
-                className="flex items-center gap-2"
-              >
-                {isTranscriptUploading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                    Processing...
-                  </>
+          <h2 className="panel-header">Transcript</h2>
+          {parsedSpeakers.length > 0 ? (
+            <div className="space-y-6 text-sm">
+              {parsedSpeakers.map((entry, idx) => (
+                <div key={idx}>
+                  <p className="transcript-speaker">
+                    {entry.speaker} {entry.time && `(${entry.time})`}:
+                  </p>
+                  <p className="text-muted-foreground mt-1">"{entry.content}"</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Textarea
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              placeholder="Paste your meeting transcript here...&#10;&#10;Format example:&#10;Jane (00:02): Welcome everyone to today's meeting.&#10;John (00:15): Thanks for having me."
+              className="min-h-[400px] bg-background border-border resize-none text-sm"
+            />
+          )}
+        </aside>
+
+        {/* Center Panel - Generated Minutes */}
                 ) : (
                   <>
                     <Upload className="h-3 w-3" />
