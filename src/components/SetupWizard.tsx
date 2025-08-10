@@ -19,7 +19,8 @@ import {
   XCircle,
   ArrowLeft,
   ArrowRight,
-  Settings
+  Settings,
+  House
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
@@ -207,9 +208,14 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
               <p className="text-sm text-muted-foreground">Setup Wizard</p>
             </div>
           </div>
-          <Button onClick={onToggleDarkMode} variant="ghost" size="sm">
-            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={onCancel} variant="ghost" size="sm" aria-label="Go home">
+              <House className="h-4 w-4" />
+            </Button>
+            <Button onClick={onToggleDarkMode} variant="ghost" size="sm">
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
         {/* Progress and Step Indicator */}

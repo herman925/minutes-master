@@ -3,7 +3,7 @@ import type React from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Settings, Sparkles, Sun, Moon } from '@phosphor-icons/react'
+import { Settings, Sparkles, Sun, Moon, House } from '@phosphor-icons/react'
 import MinutesHistory from './MinutesHistory'
 import DictionaryManager from './DictionaryManager'
 import ApiManager from './ApiManager'
@@ -189,6 +189,15 @@ Content: ${base64.substring(0, 1000)}...`
             <h1 className="text-lg font-semibold">{generatedMinutes?.title || 'Q3 Planning Meeting'}</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              onClick={onResetToWizard}
+              variant="ghost"
+              size="sm"
+              className="p-2"
+              aria-label="Go home"
+            >
+              <House />
+            </Button>
             <Button 
               onClick={onExport} 
               disabled={!generatedMinutes} 
