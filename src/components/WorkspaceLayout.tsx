@@ -2,13 +2,16 @@ import { useState, useRef } from 'react'
 import type React from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Settings, Sparkles, Sun, Moon, House } from '@phosphor-icons/react'
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Gear, Sparkle, Sun, Moon, House } from '@phosphor-icons/react'
 import MinutesHistory from './MinutesHistory'
 import DictionaryManager from './DictionaryManager'
+import UserInstructions from './UserInstructions'
 import ApiManager from './ApiManager'
 import { toast } from 'sonner'
 import type { GeneratedMinutes } from '@/types'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 
 interface DictionaryEntry {
   id: string
@@ -74,6 +77,8 @@ export default function WorkspaceLayout({
   meetingHistory
 }: WorkspaceLayoutProps) {
   const [activeTab, setActiveTab] = useState('dictionary')
+  const [isDictionaryOpen, setIsDictionaryOpen] = useState(false)
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState(false)
   const [isTranscriptUploading, setIsTranscriptUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -181,7 +186,9 @@ Content: ${base64.substring(0, 1000)}...`
   return (
     <>
       {/* Main Workspace Grid */}
-      <div className="main-grid">
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <div className="main-grid main-grid--no-right">
         {/* Header */}
         <header className="header bg-card border-b border-border flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-4">
@@ -213,14 +220,36 @@ Content: ${base64.substring(0, 1000)}...`
             >
               {darkMode ? <Sun /> : <Moon />}
             </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDictionaryOpen(true)}
+              >
+                Dictionary
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsInstructionsOpen(true)}
+              >
+                Instructions
+              </Button>
+            </div>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-2">
-                  <Settings className="text-muted-foreground" />
+                <Button variant="ghost" size="sm" className="p-2" aria-label="Open settings">
+                  <Gear className="text-muted-foreground" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <ApiManager />
+              <DialogContent className="sm:max-w-4xl lg:max-w-5xl p-0 flex flex-col">
+                <DialogHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-4 sm:p-6">
+                  <DialogTitle className="text-base sm:text-lg">Settings</DialogTitle>
+                  <DialogDescription>Configure API, models, and usage preferences</DialogDescription>
+                </DialogHeader>
+                <div className="p-4 sm:p-6">
+                  <ApiManager />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
@@ -314,55 +343,7 @@ Content: ${base64.substring(0, 1000)}...`
           )}
         </main>
 
-        {/* Right Panel - Customization */}
-        <aside className="panel">
-          <div>
-            <div className="border-b border-border">
-              <ul className="flex -mb-px">
-                <li className="mr-2">
-                  <button type="button"
-                    className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'dictionary' ? 'border-primary text-primary' : 'border-transparent hover:text-muted-foreground hover:border-muted-foreground'}`}
-                    onClick={() => setActiveTab('dictionary')}
-                  >
-                    Dictionary
-                  </button>
-                </li>
-                <li className="mr-2">
-                  <button type="button"
-                    className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'instructions' ? 'border-primary text-primary' : 'border-transparent hover:text-muted-foreground hover:border-muted-foreground'}`}
-                    onClick={() => setActiveTab('instructions')}
-                  >
-                    Instructions
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div className="pt-4">
-              {activeTab === 'dictionary' && (
-                <DictionaryManager
-                  dictionary={dictionary}
-                  setDictionary={setDictionary}
-                  // Provide transcript to enable acronym detection and contextual suggestions
-                  // within the dictionary panel.
-                  transcript={transcript}
-                />
-              )}
-              
-              {activeTab === 'instructions' && (
-                <div>
-                  <Textarea
-                    className="w-full bg-secondary border border-border rounded-md p-2"
-                    rows={8}
-                    defaultValue={Array.isArray(userInstructions) && userInstructions.length > 0 
-                      ? userInstructions.map(inst => `[${inst.category}] ${inst.title}: ${inst.instruction}`).join('\n\n') 
-                      : "Always use a formal and professional tone.\nSummarize decisions at the top of the document.\nFormat action items with the responsible person's name in bold."
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </aside>
+        {/* Right tools moved to sheets; no static right panel */}
 
         {/* Footer */}
         <footer className="footer bg-card border-t border-border flex items-center justify-between px-6 py-2 text-sm">
@@ -376,11 +357,48 @@ Content: ${base64.substring(0, 1000)}...`
             disabled={isGenerating || !transcript.trim()}
             className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkle className="w-4 h-4" />
             {isGenerating ? 'Generating...' : 'Regenerate'}
           </Button>
         </footer>
-      </div>
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={() => setIsDictionaryOpen(true)}>Open Dictionary</ContextMenuItem>
+          <ContextMenuItem onClick={() => setIsInstructionsOpen(true)}>Open Instructions</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+
+      {/* Dictionary Sheet */}
+      <Sheet open={isDictionaryOpen} onOpenChange={setIsDictionaryOpen}>
+        <SheetContent side="right" className="sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Dictionary</SheetTitle>
+          </SheetHeader>
+          <div className="p-4">
+            <DictionaryManager
+              dictionary={dictionary}
+              setDictionary={setDictionary}
+              transcript={transcript}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Instructions Sheet */}
+      <Sheet open={isInstructionsOpen} onOpenChange={setIsInstructionsOpen}>
+        <SheetContent side="right" className="sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Instructions</SheetTitle>
+          </SheetHeader>
+          <div className="p-4">
+            <UserInstructions
+              instructions={userInstructions}
+              setInstructions={setUserInstructions}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   )
 }
