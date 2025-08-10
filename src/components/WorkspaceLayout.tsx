@@ -76,7 +76,7 @@ export default function WorkspaceLayout({
   onToggleDarkMode,
   meetingHistory
 }: WorkspaceLayoutProps) {
-  // Panels now open in sheets instead of a persistent right sidebar
+  const [activeTab, setActiveTab] = useState('dictionary')
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false)
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false)
   const [isTranscriptUploading, setIsTranscriptUploading] = useState(false)

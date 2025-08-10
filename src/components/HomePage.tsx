@@ -1,4 +1,4 @@
-import { Sparkles, FileText, Settings, Sun, Moon } from '@phosphor-icons/react'
+import { Sparkles, FileText, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface HomePageProps {
@@ -38,11 +38,11 @@ export default function HomePage({
             <div className="relative">
               {/* AI Brain Icon */}
               <div className="w-24 h-24 bg-primary rounded-2xl flex items-center justify-center mb-4 shadow-2xl">
-                <Sparkles size={40} className="text-primary-foreground" weight="bold" />
+                <Sparkles size={40} className="text-primary-foreground" />
               </div>
               {/* Floating accent */}
               <div className="absolute -top-2 -right-2 w-8 h-8 bg-accent rounded-full flex items-center justify-center shadow-lg">
-                <FileText size={16} className="text-accent-foreground" weight="bold" />
+                <FileText size={16} className="text-accent-foreground" />
               </div>
             </div>
           </div>
@@ -64,7 +64,7 @@ export default function HomePage({
             className="flex-1 h-16 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover-lift transition-smooth"
           >
             <div className="flex flex-col items-center gap-1">
-                <Settings size={24} weight="bold" />
+              <Settings size={24} />
               <span>Setup Wizard</span>
             </div>
           </Button>
@@ -75,7 +75,7 @@ export default function HomePage({
             className="flex-1 h-16 text-lg font-semibold border-2 hover:bg-accent hover:text-accent-foreground hover:border-accent shadow-lg hover-lift transition-smooth"
           >
             <div className="flex flex-col items-center gap-1">
-              <Sparkles size={24} weight="bold" />
+              <Sparkles size={24} />
               <span>Quick Start</span>
             </div>
           </Button>
@@ -85,7 +85,7 @@ export default function HomePage({
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl">
           <div className="text-center">
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <FileText size={24} className="text-accent" weight="bold" />
+              <FileText size={24} className="text-accent" />
             </div>
             <h3 className="font-semibold mb-2">Smart Processing</h3>
             <p className="text-sm text-muted-foreground">
@@ -95,7 +95,7 @@ export default function HomePage({
           
           <div className="text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <Settings size={24} className="text-primary" weight="bold" />
+              <Settings size={24} className="text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Custom Dictionary</h3>
             <p className="text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ export default function HomePage({
           
           <div className="text-center">
             <div className="w-12 h-12 bg-secondary/50 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <Sparkles size={24} className="text-foreground" weight="bold" />
+              <Sparkles size={24} className="text-foreground" />
             </div>
             <h3 className="font-semibold mb-2">Professional Output</h3>
             <p className="text-sm text-muted-foreground">
