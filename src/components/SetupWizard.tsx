@@ -58,7 +58,7 @@ const WIZARD_STEPS = [
     id: 3,
     title: 'Final Configuration',
     description: 'Give your meeting a title and add any special instructions.',
-    icon: Settings
+    icon: Gear
   }
 ]
 

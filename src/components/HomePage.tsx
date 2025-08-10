@@ -1,4 +1,4 @@
-import { Sparkle, FileText, Gear } from '@phosphor-icons/react'
+import { Sparkles, FileText, Settings, Sun, Moon } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 
 interface HomePageProps {
@@ -22,25 +22,11 @@ export default function HomePage({
           variant="ghost"
           size="sm"
           onClick={onToggleDarkMode}
-          className="text-muted-foreground hover:text-foreground"
+          className="p-2 text-muted-foreground hover:text-foreground"
+          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {darkMode ? (
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              Light
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-              Dark
-            </span>
-          )}
+          {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
       </header>
 
@@ -52,7 +38,7 @@ export default function HomePage({
             <div className="relative">
               {/* AI Brain Icon */}
               <div className="w-24 h-24 bg-primary rounded-2xl flex items-center justify-center mb-4 shadow-2xl">
-                <Sparkle size={40} className="text-primary-foreground" weight="bold" />
+                <Sparkles size={40} className="text-primary-foreground" weight="bold" />
               </div>
               {/* Floating accent */}
               <div className="absolute -top-2 -right-2 w-8 h-8 bg-accent rounded-full flex items-center justify-center shadow-lg">
@@ -78,7 +64,7 @@ export default function HomePage({
             className="flex-1 h-16 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover-lift transition-smooth"
           >
             <div className="flex flex-col items-center gap-1">
-                <Gear size={24} weight="bold" />
+                <Settings size={24} weight="bold" />
               <span>Setup Wizard</span>
             </div>
           </Button>

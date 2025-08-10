@@ -219,7 +219,7 @@ Content: ${base64.substring(0, 1000)}...`
                   <Gear className="text-muted-foreground" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-3xl p-0 flex flex-col">
+              <DialogContent className="sm:max-w-4xl lg:max-w-5xl p-0 flex flex-col">
                 <DialogHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-4 sm:p-6">
                   <DialogTitle className="text-base sm:text-lg">Settings</DialogTitle>
                   <DialogDescription>Configure API, models, and usage preferences</DialogDescription>
