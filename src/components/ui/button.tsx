@@ -52,6 +52,9 @@ function Button({
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
+      {...(!asChild && (props as ComponentProps<"button">).type === undefined
+        ? { type: "button" }
+        : {})}
     />
   )
 }

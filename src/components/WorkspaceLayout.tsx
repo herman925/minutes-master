@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
+import type React from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Settings, Sparkles, Sun, Moon, Upload, FileText } from '@phosphor-icons/react'
+import { Settings, Sparkles, Sun, Moon } from '@phosphor-icons/react'
 import MinutesHistory from './MinutesHistory'
+import DictionaryManager from './DictionaryManager'
 import ApiManager from './ApiManager'
 import { toast } from 'sonner'
 import type { GeneratedMinutes } from '@/types'
@@ -104,13 +106,12 @@ export default function WorkspaceLayout({
   }
 
   const handleTranscriptUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    if (files.length === 0) return
+    const file = event.target.files?.[0] ?? null
+    if (!file) return
 
     setIsTranscriptUploading(true)
     
     try {
-      const file = files[0] // Take first file only
       const fileExtension = file.name.toLowerCase().split('.').pop()
       
       if (fileExtension === 'txt' || fileExtension === 'md' || file.type.startsWith('text/')) {
@@ -123,8 +124,14 @@ export default function WorkspaceLayout({
         // Handle audio/video with transcription
         toast.info('Transcribing audio/video file...')
         
+        const sparkApi = (window as any)?.spark
+        if (!sparkApi) {
+          toast.error('AI transcription is unavailable. Please configure the Spark provider or use a text transcript.')
+          return
+        }
+
         const base64 = await fileToBase64(file)
-        const prompt = spark.llmPrompt`Please transcribe this ${file.type.startsWith('audio/') ? 'audio' : 'video'} file. Extract all spoken content and identify speakers if possible. Format as:
+        const prompt = sparkApi.llmPrompt`Please transcribe this ${file.type.startsWith('audio/') ? 'audio' : 'video'} file. Extract all spoken content and identify speakers if possible. Format as:
 
 Speaker Name (HH:MM): Dialogue content
 
@@ -133,7 +140,7 @@ If speakers cannot be identified, use Speaker 1, Speaker 2, etc. If timestamps a
 File: ${file.name}
 Content: ${base64.substring(0, 1000)}...`
 
-        const transcription = await spark.llm(prompt, 'gpt-4o', false)
+        const transcription = await sparkApi.llm(prompt, 'gpt-4o', false)
         setTranscript(transcription)
         toast.success(`Transcribed ${file.name}`)
       } else {
@@ -235,62 +242,6 @@ Content: ${base64.substring(0, 1000)}...`
         </aside>
 
         {/* Center Panel - Generated Minutes */}
-                ) : (
-                  <>
-                    <Upload className="h-3 w-3" />
-                    Upload
-                  </>
-                )}
-              </Button>
-              {transcript && (
-                <Button
-                  onClick={() => setTranscript('')}
-                  variant="outline"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {parsedSpeakers.length > 0 ? (
-            <div className="space-y-6 text-sm">
-              {parsedSpeakers.map((entry, idx) => (
-                <div key={idx}>
-                  <p className="transcript-speaker">
-                    {entry.speaker} {entry.time && `(${entry.time})`}:
-                  </p>
-                  <p className="text-muted-foreground mt-1">"{entry.content}"</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <Textarea
-                value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                placeholder="Paste your meeting transcript here...&#10;&#10;Format example:&#10;Jane (00:02): Welcome everyone to today's meeting.&#10;John (00:15): Thanks for having me.&#10;&#10;Or click 'Upload' to import a transcript/audio file."
-                className="min-h-[350px] bg-background border-border resize-none text-sm"
-              />
-              
-              {!transcript && (
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                  <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    No transcript loaded
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Upload a file or paste text above to get started
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </aside>
-
-        {/* Center Panel - Generated Minutes */}
         <main className="panel rich-text-editor">
           <h2 className="panel-header">Generated Minutes</h2>
           
@@ -360,7 +311,7 @@ Content: ${base64.substring(0, 1000)}...`
             <div className="border-b border-border">
               <ul className="flex -mb-px">
                 <li className="mr-2">
-                  <button 
+                  <button type="button"
                     className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'dictionary' ? 'border-primary text-primary' : 'border-transparent hover:text-muted-foreground hover:border-muted-foreground'}`}
                     onClick={() => setActiveTab('dictionary')}
                   >
@@ -368,7 +319,7 @@ Content: ${base64.substring(0, 1000)}...`
                   </button>
                 </li>
                 <li className="mr-2">
-                  <button 
+                  <button type="button"
                     className={`inline-block p-4 border-b-2 rounded-t-lg ${activeTab === 'instructions' ? 'border-primary text-primary' : 'border-transparent hover:text-muted-foreground hover:border-muted-foreground'}`}
                     onClick={() => setActiveTab('instructions')}
                   >
@@ -379,32 +330,13 @@ Content: ${base64.substring(0, 1000)}...`
             </div>
             <div className="pt-4">
               {activeTab === 'dictionary' && (
-                <div>
-                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium mb-4">
-                    Add New Term
-                  </Button>
-                  <div className="space-y-3">
-                    {Array.isArray(dictionary) && dictionary.length > 0 ? (
-                      dictionary.map((entry) => (
-                        <div key={entry.id} className="dictionary-term">
-                          <p className="font-semibold">{entry.term}</p>
-                          <p className="text-sm text-muted-foreground">{entry.definition}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <>
-                        <div className="dictionary-term">
-                          <p className="font-semibold">Project Phoenix</p>
-                          <p className="text-sm text-muted-foreground">Internal codename for the new flagship product.</p>
-                        </div>
-                        <div className="dictionary-term">
-                          <p className="font-semibold">ICP</p>
-                          <p className="text-sm text-muted-foreground">Ideal Customer Profile.</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+                <DictionaryManager
+                  dictionary={dictionary}
+                  setDictionary={setDictionary}
+                  // Provide transcript to enable acronym detection and contextual suggestions
+                  // within the dictionary panel.
+                  transcript={transcript}
+                />
               )}
               
               {activeTab === 'instructions' && (
