@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/lib/useKV'
 import { toast } from 'sonner'
 import HomePage from '@/components/HomePage'
 import WorkspaceLayout from '@/components/WorkspaceLayout'

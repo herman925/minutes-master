@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Eye, EyeSlash, Key, AlertCircle, CheckCircle, Activity } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from '@/lib/useKV'
 
 interface ApiConfig {
   provider: 'openrouter' | 'poe' | 'custom'

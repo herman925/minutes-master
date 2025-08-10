@@ -1,7 +1,8 @@
 import { createRoot } from 'react-dom/client'
 import { Toaster } from 'sonner'
-import "@github/spark/spark"
+// Spark runtime removed – use local shim
 import App from './App'
+import '@/lib/sparkShim'
 import "./index.css"
 
 createRoot(document.getElementById('root')!).render(
