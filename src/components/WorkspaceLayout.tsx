@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Settings, Sparkles, Sun, Moon } from '@phosphor-icons/react'
+import { Settings, Sparkles, Sun, Moon, Upload, FileText } from '@phosphor-icons/react'
 import MinutesHistory from './MinutesHistory'
 import ApiManager from './ApiManager'
+import { toast } from 'sonner'
 import type { GeneratedMinutes } from '@/types'
 
 interface DictionaryEntry {
@@ -71,6 +72,8 @@ export default function WorkspaceLayout({
   meetingHistory
 }: WorkspaceLayoutProps) {
   const [activeTab, setActiveTab] = useState('dictionary')
+  const [isTranscriptUploading, setIsTranscriptUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Parse transcript to extract speakers and content like the HTML example
   const parseTranscript = (text: string) => {
@@ -98,6 +101,72 @@ export default function WorkspaceLayout({
     }
     
     return speakers
+  }
+
+  const handleTranscriptUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    if (files.length === 0) return
+
+    setIsTranscriptUploading(true)
+    
+    try {
+      const file = files[0] // Take first file only
+      const fileExtension = file.name.toLowerCase().split('.').pop()
+      
+      if (fileExtension === 'txt' || fileExtension === 'md' || file.type.startsWith('text/')) {
+        // Read text file directly
+        const content = await readTextFile(file)
+        setTranscript(content)
+        toast.success(`Transcript loaded from ${file.name}`)
+      } else if (file.type.startsWith('audio/') || file.type.startsWith('video/') || 
+                 ['mp3', 'wav', 'm4a', 'mp4', 'mov', 'webm'].includes(fileExtension!)) {
+        // Handle audio/video with transcription
+        toast.info('Transcribing audio/video file...')
+        
+        const base64 = await fileToBase64(file)
+        const prompt = spark.llmPrompt`Please transcribe this ${file.type.startsWith('audio/') ? 'audio' : 'video'} file. Extract all spoken content and identify speakers if possible. Format as:
+
+Speaker Name (HH:MM): Dialogue content
+
+If speakers cannot be identified, use Speaker 1, Speaker 2, etc. If timestamps are not clear, use incremental times like 00:01, 00:02, etc.
+
+File: ${file.name}
+Content: ${base64.substring(0, 1000)}...`
+
+        const transcription = await spark.llm(prompt, 'gpt-4o', false)
+        setTranscript(transcription)
+        toast.success(`Transcribed ${file.name}`)
+      } else {
+        toast.error('Unsupported file type. Please use TXT, MD, MP3, MP4, WAV, or M4A files.')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast.error('Failed to process file')
+    } finally {
+      setIsTranscriptUploading(false)
+      // Clear the input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const readTextFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(e.target?.result as string)
+      reader.onerror = (e) => reject(e)
+      reader.readAsText(file)
+    })
+  }
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = error => reject(error)
+    })
   }
 
   const parsedSpeakers = parseTranscript(transcript)
@@ -143,7 +212,49 @@ export default function WorkspaceLayout({
 
         {/* Left Panel - Transcript */}
         <aside className="panel">
-          <h2 className="panel-header">Transcript</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="panel-header mb-0 pb-0 border-b-0">Transcript</h2>
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.md,.mp3,.wav,.m4a,.mp4,.mov,.webm,audio/*,video/*,text/*"
+                onChange={handleTranscriptUpload}
+                className="hidden"
+                disabled={isTranscriptUploading || isGenerating}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                size="sm"
+                disabled={isTranscriptUploading || isGenerating}
+                className="flex items-center gap-2"
+              >
+                {isTranscriptUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-3 w-3" />
+                    Upload
+                  </>
+                )}
+              </Button>
+              {transcript && (
+                <Button
+                  onClick={() => setTranscript('')}
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+          
           {parsedSpeakers.length > 0 ? (
             <div className="space-y-6 text-sm">
               {parsedSpeakers.map((entry, idx) => (
@@ -156,12 +267,26 @@ export default function WorkspaceLayout({
               ))}
             </div>
           ) : (
-            <Textarea
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              placeholder="Paste your meeting transcript here...&#10;&#10;Format example:&#10;Jane (00:02): Welcome everyone to today's meeting.&#10;John (00:15): Thanks for having me."
-              className="min-h-[400px] bg-background border-border resize-none text-sm"
-            />
+            <div className="space-y-4">
+              <Textarea
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                placeholder="Paste your meeting transcript here...&#10;&#10;Format example:&#10;Jane (00:02): Welcome everyone to today's meeting.&#10;John (00:15): Thanks for having me.&#10;&#10;Or click 'Upload' to import a transcript/audio file."
+                className="min-h-[350px] bg-background border-border resize-none text-sm"
+              />
+              
+              {!transcript && (
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                  <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    No transcript loaded
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Upload a file or paste text above to get started
+                  </p>
+                </div>
+              )}
+            </div>
           )}
         </aside>
 
