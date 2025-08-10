@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardAction } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { Eye, EyeSlash, Key, AlertCircle, CheckCircle, DollarSign, Activity } from '@phosphor-icons/react'
+import { Eye, EyeSlash, Key, AlertCircle, CheckCircle, Activity } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useKV } from '@github/spark/hooks'
 
@@ -78,10 +78,14 @@ export default function ApiManager() {
     setConnectionStatus('idle')
 
     try {
+      const sparkApi = (window as any)?.spark
+      if (!sparkApi) {
+        throw new Error('AI provider not initialized')
+      }
+
       // Test with a simple prompt
-      const testPrompt = spark.llmPrompt`Test connection. Please respond with "Connection successful"`
-      
-      const response = await spark.llm(testPrompt, apiConfig.model, false)
+      const testPrompt = sparkApi.llmPrompt`Test connection. Please respond with "Connection successful"`
+      const response = await sparkApi.llm(testPrompt, apiConfig.model, false)
       
       if (response && response.toLowerCase().includes('connection successful')) {
         setConnectionStatus('success')
@@ -140,52 +144,52 @@ export default function ApiManager() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* API Configuration */}
-      <Card>
-        <CardHeader>
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+      {/* Provider */}
+      <Card className="py-4">
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            API Configuration
+            Provider
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Configure your AI API settings for meeting minutes generation
-          </p>
+          <p className="text-sm text-muted-foreground">Choose your AI provider</p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Provider Selection */}
-          <div>
-            <label className="text-sm font-medium mb-3 block">AI Provider</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {PROVIDERS.map((provider) => (
-                <div
-                  key={provider.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    apiConfig.provider === provider.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => updateConfig({ 
-                    provider: provider.id,
-                    baseUrl: provider.baseUrl,
-                    model: provider.models[0]
-                  })}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-medium">{provider.name}</h4>
-                    {apiConfig.provider === provider.id && (
-                      <Badge variant="default">Selected</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{provider.description}</p>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 gap-3">
+            {PROVIDERS.map((provider) => (
+              <div
+                key={provider.id}
+                className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                  apiConfig.provider === provider.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => updateConfig({ 
+                  provider: provider.id,
+                  baseUrl: provider.baseUrl,
+                  model: provider.models[0]
+                })}
+              >
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium">{provider.name}</h4>
+                  {apiConfig.provider === provider.id && (
+                    <Badge variant="default">Selected</Badge>
+                  )}
                 </div>
-              ))}
-            </div>
+                <p className="text-xs text-muted-foreground mt-1">{provider.description}</p>
+              </div>
+            ))}
           </div>
+        </CardContent>
+      </Card>
 
-          <Separator />
-
-          {/* API Key */}
+      {/* Credentials */}
+      <Card className="py-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">Credentials</CardTitle>
+          <p className="text-sm text-muted-foreground">Key and endpoint</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <div>
             <label className="text-sm font-medium mb-2 block">API Key *</label>
             <div className="flex gap-2">
@@ -219,66 +223,82 @@ export default function ApiManager() {
                 </Button>
               )}
             </div>
-            
-            {/* Connection Status */}
-            {connectionStatus !== 'idle' && (
-              <Alert className={`mt-2 ${connectionStatus === 'success' ? 'border-green-200' : 'border-red-200'}`}>
-                {connectionStatus === 'success' ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                )}
-                <AlertDescription>
-                  {connectionStatus === 'success' 
-                    ? 'API connection successful!' 
-                    : 'Connection failed. Please check your API key and try again.'}
-                </AlertDescription>
-              </Alert>
-            )}
           </div>
 
-          <Separator />
-
-          {/* Model Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {apiConfig.provider === 'custom' && (
             <div>
-              <label className="text-sm font-medium mb-2 block">Model</label>
-              <select
-                value={apiConfig.model}
-                onChange={(e) => updateConfig({ model: e.target.value })}
-                className="w-full p-2 border rounded-md bg-background"
-              >
-                {getCurrentProvider().models.map(model => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Temperature ({apiConfig.temperature})
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={apiConfig.temperature}
-                onChange={(e) => updateConfig({ temperature: parseFloat(e.target.value) })}
-                className="w-full"
+              <label className="text-sm font-medium mb-2 block">Base URL</label>
+              <Input
+                placeholder="https://api.openai.com/v1"
+                value={apiConfig.baseUrl || ''}
+                onChange={(e) => updateConfig({ baseUrl: e.target.value })}
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Focused</span>
-                <span>Creative</span>
-              </div>
+            </div>
+          )}
+
+          {connectionStatus !== 'idle' && (
+            <Alert className={`mt-1 ${connectionStatus === 'success' ? 'border-green-200' : 'border-red-200'}`}>
+              {connectionStatus === 'success' ? (
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              )}
+              <AlertDescription>
+                {connectionStatus === 'success' 
+                  ? 'API connection successful!' 
+                  : 'Connection failed. Please check your API key and try again.'}
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Model */}
+      <Card className="py-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">Model</CardTitle>
+          <p className="text-sm text-muted-foreground">Model and generation tuning</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label htmlFor="model" className="text-sm font-medium mb-2 block">Model</label>
+            <select
+              id="model"
+              aria-label="Model"
+              value={apiConfig.model}
+              onChange={(e) => updateConfig({ model: e.target.value })}
+              className="w-full p-2 border rounded-md bg-background"
+            >
+              {getCurrentProvider().models.map(model => (
+                <option key={model} value={model}>{model}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="temperature" className="text-sm font-medium mb-2 block">Temperature ({apiConfig.temperature})</label>
+            <input
+              id="temperature"
+              aria-label="Temperature"
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={apiConfig.temperature}
+              onChange={(e) => updateConfig({ temperature: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>Focused</span>
+              <span>Creative</span>
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">
-              Max Tokens ({apiConfig.maxTokens})
-            </label>
+            <label htmlFor="maxTokens" className="text-sm font-medium mb-2 block">Max Tokens ({apiConfig.maxTokens})</label>
             <input
+              id="maxTokens"
+              aria-label="Max Tokens"
               type="range"
               min="1000"
               max="8000"
@@ -292,89 +312,54 @@ export default function ApiManager() {
               <span>8K</span>
             </div>
           </div>
-
-          {apiConfig.provider === 'custom' && (
-            <div>
-              <label className="text-sm font-medium mb-2 block">Base URL</label>
-              <Input
-                placeholder="https://api.openai.com/v1"
-                value={apiConfig.baseUrl || ''}
-                onChange={(e) => updateConfig({ baseUrl: e.target.value })}
-              />
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Usage Statistics */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Usage Statistics
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Track your API usage and estimated costs
-              </p>
-            </div>
-            <Button onClick={resetUsageStats} variant="outline" size="sm">
-              Reset Stats
-            </Button>
-          </div>
+      {/* Usage */}
+      <Card className="py-4 sm:col-span-2 xl:col-span-1">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Usage
+          </CardTitle>
+          <CardAction>
+            <Button onClick={resetUsageStats} variant="outline" size="sm">Reset</Button>
+          </CardAction>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{usageStats.totalRequests}</div>
-              <div className="text-sm text-muted-foreground">Total Requests</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <div className="text-xl font-bold text-primary">{usageStats.totalRequests}</div>
+              <div className="text-xs text-muted-foreground">Requests</div>
             </div>
-            
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">
-                {usageStats.totalTokens.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">Tokens Used</div>
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <div className="text-xl font-bold text-primary">{usageStats.totalTokens.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">Tokens</div>
             </div>
-            
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">
-                {formatCurrency(usageStats.estimatedCost)}
-              </div>
-              <div className="text-sm text-muted-foreground">Est. Cost</div>
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <div className="text-xl font-bold text-primary">{formatCurrency(usageStats.estimatedCost)}</div>
+              <div className="text-xs text-muted-foreground">Est. Cost</div>
             </div>
-            
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-sm font-medium">Last Used</div>
-              <div className="text-xs text-muted-foreground">
-                {formatDate(usageStats.lastUsed)}
-              </div>
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <div className="text-xs font-medium">Last Used</div>
+              <div className="text-xs text-muted-foreground">{formatDate(usageStats.lastUsed)}</div>
             </div>
           </div>
-
-          {/* Usage Progress */}
-          <div className="mt-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">Monthly Usage</span>
-              <span className="text-sm text-muted-foreground">
-                {usageStats.totalRequests}/1000 requests
-              </span>
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-medium">Monthly</span>
+              <span className="text-xs text-muted-foreground">{usageStats.totalRequests}/1000</span>
             </div>
-            <Progress 
-              value={Math.min((usageStats.totalRequests / 1000) * 100, 100)} 
-              className="h-2" 
-            />
+            <Progress value={Math.min((usageStats.totalRequests / 1000) * 100, 100)} className="h-2" />
           </div>
         </CardContent>
       </Card>
 
       {/* Security Notice */}
-      <Alert>
+      <Alert className="sm:col-span-2 xl:col-span-3">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Security Notice:</strong> Your API keys are stored locally in your browser and never sent to external servers. 
-          Make sure to keep your API keys secure and never share them with others.
+          <strong>Security Notice:</strong> Your API keys are stored locally in your browser and never sent to external servers. Keep them safe and do not share.
         </AlertDescription>
       </Alert>
     </div>
