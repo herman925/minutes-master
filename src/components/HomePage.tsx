@@ -1,4 +1,4 @@
-import { Sparkles, FileText, Settings } from '@phosphor-icons/react'
+import { Sparkle, FileText, Gear } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 
 interface HomePageProps {
@@ -52,7 +52,7 @@ export default function HomePage({
             <div className="relative">
               {/* AI Brain Icon */}
               <div className="w-24 h-24 bg-primary rounded-2xl flex items-center justify-center mb-4 shadow-2xl">
-                <Sparkles size={40} className="text-primary-foreground" weight="bold" />
+                <Sparkle size={40} className="text-primary-foreground" weight="bold" />
               </div>
               {/* Floating accent */}
               <div className="absolute -top-2 -right-2 w-8 h-8 bg-accent rounded-full flex items-center justify-center shadow-lg">
@@ -78,7 +78,7 @@ export default function HomePage({
             className="flex-1 h-16 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover-lift transition-smooth"
           >
             <div className="flex flex-col items-center gap-1">
-              <Settings size={24} weight="bold" />
+                <Gear size={24} weight="bold" />
               <span>Setup Wizard</span>
             </div>
           </Button>

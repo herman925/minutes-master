@@ -2,8 +2,8 @@ import { useState, useRef } from 'react'
 import type React from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Settings, Sparkles, Sun, Moon, House } from '@phosphor-icons/react'
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Gear, Sparkle, Sun, Moon, House } from '@phosphor-icons/react'
 import MinutesHistory from './MinutesHistory'
 import DictionaryManager from './DictionaryManager'
 import ApiManager from './ApiManager'
@@ -215,12 +215,18 @@ Content: ${base64.substring(0, 1000)}...`
             </Button>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-2">
-                  <Settings className="text-muted-foreground" />
+                <Button variant="ghost" size="sm" className="p-2" aria-label="Open settings">
+                  <Gear className="text-muted-foreground" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <ApiManager />
+              <DialogContent className="sm:max-w-3xl p-0 flex flex-col">
+                <DialogHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-4 sm:p-6">
+                  <DialogTitle className="text-base sm:text-lg">Settings</DialogTitle>
+                  <DialogDescription>Configure API, models, and usage preferences</DialogDescription>
+                </DialogHeader>
+                <div className="p-4 sm:p-6">
+                  <ApiManager />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
@@ -376,7 +382,7 @@ Content: ${base64.substring(0, 1000)}...`
             disabled={isGenerating || !transcript.trim()}
             className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkle className="w-4 h-4" />
             {isGenerating ? 'Generating...' : 'Regenerate'}
           </Button>
         </footer>
