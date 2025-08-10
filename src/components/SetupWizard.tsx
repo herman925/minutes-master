@@ -7,10 +7,10 @@ import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Progress } from './ui/progress'
 import { Badge } from './ui/badge'
-import { 
-  UploadCloud, 
-  FileText, 
-  Sparkle, 
+import {
+  UploadCloud,
+  FileText,
+  Sparkles,
   Sun,
   Moon,
   File,
@@ -19,9 +19,9 @@ import {
   XCircle,
   ArrowLeft,
   ArrowRight,
-  Gear,
-  House
-} from '@phosphor-icons/react'
+  Cog,
+  Home
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 interface FileWithPreview extends File {
@@ -58,7 +58,7 @@ const WIZARD_STEPS = [
     id: 3,
     title: 'Final Configuration',
     description: 'Give your meeting a title and add any special instructions.',
-    icon: Gear
+    icon: Cog
   }
 ]
 
@@ -201,7 +201,7 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
         <div className="p-6 border-b border-border flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-lg shadow-sm">
-              <Sparkle className="h-6 w-6 text-white" />
+              <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold">MinutesMaster AI</h1>
@@ -210,7 +210,7 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
           </div>
           <div className="flex items-center gap-2">
             <Button onClick={onCancel} variant="ghost" size="sm" aria-label="Go home">
-              <House className="h-4 w-4" />
+              <Home className="h-4 w-4" />
             </Button>
             <Button onClick={onToggleDarkMode} variant="ghost" size="sm">
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -539,9 +539,8 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-border">
               <Button
-                onClick={handleBack}
+                onClick={() => (currentStep === 1 ? onCancel() : handleBack())}
                 variant="outline"
-                disabled={currentStep === 1}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />

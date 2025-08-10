@@ -3,7 +3,7 @@ import type React from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Gear, Sparkle, Sun, Moon, House } from '@phosphor-icons/react'
+import { Cog, Sparkles, Sun, Moon, Home } from 'lucide-react'
 import MinutesHistory from './MinutesHistory'
 import DictionaryManager from './DictionaryManager'
 import UserInstructions from './UserInstructions'
@@ -203,7 +203,7 @@ Content: ${base64.substring(0, 1000)}...`
               className="p-2"
               aria-label="Go home"
             >
-              <House />
+              <Home />
             </Button>
             <Button 
               onClick={onExport} 
@@ -239,7 +239,7 @@ Content: ${base64.substring(0, 1000)}...`
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-2" aria-label="Open settings">
-                  <Gear className="text-muted-foreground" />
+                  <Cog className="text-muted-foreground" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-4xl lg:max-w-5xl p-0 flex flex-col">
@@ -357,7 +357,7 @@ Content: ${base64.substring(0, 1000)}...`
             disabled={isGenerating || !transcript.trim()}
             className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"
           >
-            <Sparkle className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" />
             {isGenerating ? 'Generating...' : 'Regenerate'}
           </Button>
         </footer>

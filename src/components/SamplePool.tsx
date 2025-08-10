@@ -5,12 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Upload, 
-  FileText, 
-  Trash, 
-  Eye, 
-  Tag, 
+import {
+  Upload,
+  FileText,
+  Trash,
+  Eye,
+  Tag,
   Calendar,
   Users,
   Sparkles,
@@ -18,7 +18,7 @@ import {
   Plus,
   Search,
   X
-} from '@phosphor-icons/react'
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -231,6 +231,9 @@ export default function SamplePool({ samples, setSamples }: SamplePoolProps) {
             accept=".txt,.md,.rtf,.docx"
             onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
             className="hidden"
+            id="sample-file-input"
+            aria-label="Upload sample minutes files"
+            title="Upload sample minutes files"
           />
         </CardContent>
       </Card>

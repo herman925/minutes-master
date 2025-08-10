@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Download, Edit2, FileText, Users, CheckCircle, Clock } from '@phosphor-icons/react'
+import { Download, Edit2, FileText, Users, CheckCircle, Clock } from 'lucide-react'
 
 interface GeneratedMinutes {
   title: string

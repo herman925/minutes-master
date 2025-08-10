@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { Eye, EyeSlash, Key, AlertCircle, CheckCircle, Activity } from '@phosphor-icons/react'
+import { Eye, EyeOff as EyeSlash, KeyRound as Key, AlertTriangle as WarningCircle, CheckCircle, Activity as Pulse } from 'lucide-react'
 import { toast } from 'sonner'
 import { useKV } from '@/lib/useKV'
 
@@ -54,6 +54,20 @@ export default function ApiManager() {
       description: 'Access to multiple AI models through one API',
       baseUrl: 'https://openrouter.ai/api/v1',
       models: ['gpt-4o', 'gpt-4o-mini', 'claude-3-sonnet', 'claude-3-haiku']
+    },
+    {
+      id: 'poe' as const,
+      name: 'Poe API',
+      description: 'OpenAI-compatible endpoint for hundreds of Poe bots/models',
+      baseUrl: 'https://api.poe.com/v1',
+      models: [
+        'Claude-Opus-4.1',
+        'Claude-Sonnet-4',
+        'Gemini-2.5-Pro',
+        'GPT-5',
+        'Grok-4',
+        'gpt-4.1'
+      ]
     },
     {
       id: 'custom' as const,
@@ -241,7 +255,7 @@ export default function ApiManager() {
               {connectionStatus === 'success' ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
+                <WarningCircle className="h-4 w-4 text-red-600" />
               )}
               <AlertDescription>
                 {connectionStatus === 'success' 
@@ -319,7 +333,7 @@ export default function ApiManager() {
       <Card className="py-4 sm:col-span-2 xl:col-span-1">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
+            <Pulse className="h-5 w-5" />
             Usage
           </CardTitle>
           <CardAction>
@@ -357,7 +371,7 @@ export default function ApiManager() {
 
       {/* Security Notice */}
       <Alert className="sm:col-span-2 xl:col-span-3">
-        <AlertCircle className="h-4 w-4" />
+        <WarningCircle className="h-4 w-4" />
         <AlertDescription>
           <strong>Security Notice:</strong> Your API keys are stored locally in your browser and never sent to external servers. Keep them safe and do not share.
         </AlertDescription>

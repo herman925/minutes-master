@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Plus, Trash2, Edit2, Save, X, BookOpen, ClockCounterClockwise, UploadSimple } from '@phosphor-icons/react'
+import { Plus, Trash2 as Trash, Pencil as PencilSimple, Save as FloppyDisk, X, BookOpen, History as ClockCounterClockwise, Upload as UploadSimple } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface DictionaryEntry {
@@ -326,7 +326,7 @@ export default function DictionaryManager({ dictionary, setDictionary, transcrip
               </div>
               <div className="flex gap-2">
                 <Button onClick={addEntry} size="sm">
-                  <Save className="h-4 w-4 mr-2" />
+                  <FloppyDisk className="h-4 w-4 mr-2" />
                   Save
                 </Button>
                 <Button onClick={cancelEdit} variant="outline" size="sm">
@@ -376,7 +376,7 @@ export default function DictionaryManager({ dictionary, setDictionary, transcrip
                       </div>
                       <div className="flex gap-2">
                         <Button onClick={saveEdit} size="sm">
-                          <Save className="h-4 w-4 mr-2" />
+                          <FloppyDisk className="h-4 w-4 mr-2" />
                           Save
                         </Button>
                         <Button onClick={cancelEdit} variant="outline" size="sm">
@@ -407,7 +407,7 @@ export default function DictionaryManager({ dictionary, setDictionary, transcrip
                           size="sm"
                           disabled={editingId !== null || isAddingNew}
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <PencilSimple className="h-4 w-4" />
                         </Button>
                         <Button 
                           onClick={() => deleteEntry(entry.id)} 
@@ -415,7 +415,7 @@ export default function DictionaryManager({ dictionary, setDictionary, transcrip
                           size="sm"
                           disabled={editingId !== null || isAddingNew}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>

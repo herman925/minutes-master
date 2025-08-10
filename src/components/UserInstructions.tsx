@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash2, Edit2, Save, X, Settings, TestTube } from '@phosphor-icons/react'
+import { Plus, Trash2, Edit2, Save, X, Settings, TestTube } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface UserInstruction {

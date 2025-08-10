@@ -1,4 +1,4 @@
-import { Sparkles, FileText, Settings } from 'lucide-react'
+import { Sparkles, FileText, Settings, Sun, Moon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface HomePageProps {
@@ -17,21 +17,22 @@ export default function HomePage({
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header with theme toggle */}
-      <header className="flex justify-end p-6">
+      <header className="flex justify-end p-6 relative z-10">
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggleDarkMode}
-          className="p-2 text-muted-foreground hover:text-foreground"
+          className="p-2 rounded-full cursor-pointer text-muted-foreground hover:text-primary bg-secondary/60 hover:bg-primary/20 dark:hover:bg-primary/30 ring-1 ring-border hover:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-colors transition-transform active:scale-95"
           aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-pressed={darkMode}
         >
-          {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-16">
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
         {/* Logo */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-6">

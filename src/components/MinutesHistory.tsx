@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { FileText, Menu, PlusCircle } from '@phosphor-icons/react'
+import { FileText, List, PlusCircle } from 'lucide-react'
 import type { GeneratedMinutes } from '@/types'
 
 interface MinutesHistoryProps {
@@ -13,7 +13,7 @@ export default function MinutesHistory({ meetings, onNewMeeting }: MinutesHistor
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="ghost" size="sm" className="p-2">
-          <Menu className="text-muted-foreground" />
+          <List className="text-muted-foreground" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-80">

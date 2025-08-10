@@ -6,17 +6,17 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Upload, 
-  FileText, 
-  Sparkles, 
-  Check, 
-  X, 
+import {
+  Upload,
+  FileText,
+  Sparkles,
+  Check,
+  X,
   Loader2,
   Mic,
   Video,
   File
-} from '@phosphor-icons/react'
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 interface TranscriptInputProps {
@@ -221,13 +221,13 @@ Speaker 2: [00:12] Thank you for having me. I'll present the findings first."
 
             <TabsContent value="upload" className="space-y-4">
               {/* File Upload Area */}
-              <div 
-                className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-smooth cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
+              <label
+                htmlFor="transcript-upload-input"
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-smooth cursor-pointer block"
               >
                 <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">Upload Transcript Files</h3>
-                <p className="text-muted-foreground mb-4">
+                <p id="upload-instructions" className="text-muted-foreground mb-4">
                   Drag and drop files here, or click to browse
                 </p>
                 
@@ -251,6 +251,9 @@ Speaker 2: [00:12] Thank you for having me. I'll present the findings first."
                 </div>
                 
                 <input
+                  id="transcript-upload-input"
+                  aria-label="Choose transcript files to upload"
+                  aria-describedby="upload-instructions"
                   ref={fileInputRef}
                   type="file"
                   multiple
@@ -258,7 +261,7 @@ Speaker 2: [00:12] Thank you for having me. I'll present the findings first."
                   onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
                   className="hidden"
                 />
-              </div>
+              </label>
 
               {/* Processing Indicator */}
               {isProcessing && (

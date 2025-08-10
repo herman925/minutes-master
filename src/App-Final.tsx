@@ -5,18 +5,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { 
-  FileText, 
-  Settings, 
-  BookOpen, 
-  Download, 
-  Sparkles, 
+import {
+  FileText,
+  Settings,
+  BookOpen,
+  Download,
+  Sparkles,
   User,
   FolderOpen,
-  TrendUp,
+  TrendingUp,
   Zap,
   Shield
-} from '@phosphor-icons/react'
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import DictionaryManager from '@/components/DictionaryManager'
@@ -217,7 +217,7 @@ ${generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n')}
                 <Zap className="h-4 w-4" />
                 <span>Intelligent</span>
                 <span>•</span>
-                <TrendUp className="h-4 w-4" />
+                <TrendingUp className="h-4 w-4" />
                 <span>Professional</span>
               </div>
             </div>

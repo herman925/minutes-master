@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Upload, X, AlertCircle, FileAudio, Film } from '@phosphor-icons/react'
+import { FileText, Upload, X, AlertTriangle, FileAudio, Film } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface UploadedFile {
@@ -111,7 +111,7 @@ export default function FileUploader({ onFilesUploaded, isProcessing }: FileUplo
       setTranscriptionProgress(30)
 
       // Create transcription prompt
-      const prompt = spark.llmPrompt`Please transcribe this ${uploadedFile.type} file. Extract all spoken content and identify speakers if possible. Format as:
+      const prompt = (window as any).spark.llmPrompt`Please transcribe this ${uploadedFile.type} file. Extract all spoken content and identify speakers if possible. Format as:
 
 Speaker: Dialogue content
 
@@ -122,7 +122,7 @@ Content: ${base64.substring(0, 1000)}...`
 
       setTranscriptionProgress(60)
 
-      const transcription = await spark.llm(prompt, 'gpt-4o', false)
+      const transcription = await (window as any).spark.llm(prompt, 'gpt-4o', false)
       setTranscriptionProgress(90)
 
       uploadedFile.content = transcription
@@ -195,10 +195,11 @@ Content: ${base64.substring(0, 1000)}...`
           <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
             <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">Upload Files</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p id="upload-formats" className="text-sm text-muted-foreground mb-4">
               Supported formats: TXT, MD, PDF, DOCX, MP3, MP4, WAV, M4A
             </p>
             <input
+              id="file-upload-input"
               ref={fileInputRef}
               type="file"
               multiple
@@ -206,7 +207,9 @@ Content: ${base64.substring(0, 1000)}...`
               onChange={handleFileUpload}
               className="hidden"
               disabled={isProcessing || isTranscribing}
+              aria-describedby="upload-formats"
             />
+            <label htmlFor="file-upload-input" className="sr-only">Upload files</label>
             <Button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing || isTranscribing}
@@ -220,7 +223,7 @@ Content: ${base64.substring(0, 1000)}...`
           {/* Transcription Progress */}
           {isTranscribing && (
             <Alert>
-              <AlertCircle className="h-4 w-4" />
+              <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
