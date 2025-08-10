@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
+import HomePage from '@/components/HomePage'
 import WorkspaceLayout from '@/components/WorkspaceLayout'
 import SetupWizard from '@/components/SetupWizard'
 import type { GeneratedMinutes } from '@/types'
@@ -37,7 +38,7 @@ function App() {
   const [sampleMinutes, setSampleMinutes] = useKV<SampleMinute[]>('sample-minutes', [])
   const [darkMode, setDarkMode] = useKV<boolean>('dark-mode', false)
   const [meetingHistory, setMeetingHistory] = useKV<GeneratedMinutes[]>('meeting-history', [])
-  const [hasCompletedWizard, setHasCompletedWizard] = useState(false)
+  const [currentView, setCurrentView] = useState<'home' | 'wizard' | 'workspace'>('home')
   const [transcript, setTranscript] = useState('')
   const [generatedMinutes, setGeneratedMinutes] = useState<GeneratedMinutes | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -217,8 +218,8 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
       })
     }
     
-    // Mark wizard as completed and switch to workspace
-    setHasCompletedWizard(true)
+    // Switch to workspace and auto-generate
+    setCurrentView('workspace')
     
     // Auto-generate if we have content
     setTimeout(() => {
@@ -228,23 +229,34 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
     toast.success(`Setup complete for "${wizardData.meetingTitle}"!`)
   }
 
-  const resetApp = () => {
-    setHasCompletedWizard(false)
+  const resetToHome = () => {
+    setCurrentView('home')
     setTranscript('')
     setGeneratedMinutes(null)
-    toast.success('App reset to wizard')
+    toast.success('Returned to home')
   }
 
   return (
     <>
-      {!hasCompletedWizard ? (
-        <SetupWizard
-          onComplete={handleWizardComplete}
-          onCancel={() => setHasCompletedWizard(true)} // Allow skip to workspace
+      {currentView === 'home' && (
+        <HomePage
+          onStartWizard={() => setCurrentView('wizard')}
+          onGoToWorkspace={() => setCurrentView('workspace')}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
         />
-      ) : (
+      )}
+      
+      {currentView === 'wizard' && (
+        <SetupWizard
+          onComplete={handleWizardComplete}
+          onCancel={resetToHome}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
+      )}
+      
+      {currentView === 'workspace' && (
         <WorkspaceLayout
           transcript={transcript}
           setTranscript={setTranscript}
@@ -258,7 +270,7 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
           sampleMinutes={sampleMinutes}
           setSampleMinutes={setSampleMinutes}
           onExport={exportMinutes}
-          onResetToWizard={resetApp}
+          onResetToWizard={resetToHome}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
           meetingHistory={meetingHistory}
