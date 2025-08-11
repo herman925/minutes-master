@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardAction } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { Eye, EyeOff as EyeSlash, KeyRound as Key, AlertTriangle as WarningCircle, CheckCircle, Activity as Pulse } from 'lucide-react'
+import { Eye, EyeOff as EyeSlash, KeyRound as Key, AlertTriangle as WarningCircle, CheckCircle, Activity as Pulse, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { useKV } from '@/lib/useKV'
+import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command'
 
 interface ApiConfig {
   provider: 'openrouter' | 'poe' | 'custom'
@@ -17,6 +18,7 @@ interface ApiConfig {
   model: string
   temperature: number
   maxTokens: number
+  topP: number
 }
 
 interface UsageStats {
@@ -26,6 +28,26 @@ interface UsageStats {
   lastUsed: string
 }
 
+type ProviderId = 'openrouter' | 'poe' | 'custom'
+
+type ProviderMeta = {
+  id: ProviderId
+  name: string
+  description: string
+  baseUrl: string
+  models: string[]
+}
+
+type OpenRouterModel = {
+  id: string
+  name?: string
+  context_length?: number
+  context_length_max?: number
+  max_input_tokens?: number
+  tokens?: number
+  max_context?: number
+}
+
 export default function ApiManager() {
   const [apiConfig, setApiConfig] = useKV<ApiConfig>('api-config', {
     provider: 'openrouter',
@@ -33,7 +55,8 @@ export default function ApiManager() {
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'gpt-4o',
     temperature: 0.7,
-    maxTokens: 4000
+    maxTokens: 4000,
+    topP: 0.9,
   })
   
   const [usageStats, setUsageStats] = useKV<UsageStats>('usage-stats', {
@@ -47,16 +70,16 @@ export default function ApiManager() {
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
-  const PROVIDERS = [
+  const PROVIDERS: ProviderMeta[] = [
     {
-      id: 'openrouter' as const,
+      id: 'openrouter',
       name: 'OpenRouter',
       description: 'Access to multiple AI models through one API',
       baseUrl: 'https://openrouter.ai/api/v1',
-      models: ['gpt-4o', 'gpt-4o-mini', 'claude-3-sonnet', 'claude-3-haiku']
+      models: ['openai/gpt-4o', 'openai/gpt-4o-mini', 'anthropic/claude-3-sonnet', 'anthropic/claude-3-haiku']
     },
     {
-      id: 'poe' as const,
+      id: 'poe',
       name: 'Poe API',
       description: 'OpenAI-compatible endpoint for hundreds of Poe bots/models',
       baseUrl: 'https://api.poe.com/v1',
@@ -70,7 +93,7 @@ export default function ApiManager() {
       ]
     },
     {
-      id: 'custom' as const,
+      id: 'custom',
       name: 'Custom OpenAI',
       description: 'Direct OpenAI API or compatible endpoint',
       baseUrl: 'https://api.openai.com/v1',
@@ -78,9 +101,88 @@ export default function ApiManager() {
     }
   ]
 
+  const [isModelPickerOpen, setIsModelPickerOpen] = useState(false)
+  const [isLoadingModels, setIsLoadingModels] = useState(false)
+  const [openRouterModels, setOpenRouterModels] = useState<Array<{ id: string; label: string; contextWindow?: number }>>([])
+
   const updateConfig = (updates: Partial<ApiConfig>) => {
     setApiConfig(current => ({ ...current, ...updates }))
   }
+
+  const currentProvider = useMemo(() => PROVIDERS.find(p => p.id === apiConfig.provider) || PROVIDERS[0], [apiConfig.provider])
+
+  const recommendedModelIds = useMemo(() => [
+    'openai/gpt-4o',
+    'openai/gpt-4o-mini',
+    'anthropic/claude-3.5-sonnet',
+    'anthropic/claude-3-sonnet',
+    'google/gemini-2.0-pro-exp',
+  ], [])
+
+  const findSelectedOpenRouterModel = useMemo(() => {
+    if (apiConfig.provider !== 'openrouter') return undefined
+    return openRouterModels.find(m => m.id === apiConfig.model)
+  }, [apiConfig.provider, apiConfig.model, openRouterModels])
+
+  // Compute a dynamic max token cap based on model/provider metadata
+  const maxTokenCap = useMemo(() => {
+    if (apiConfig.provider === 'openrouter') {
+      const ctx = findSelectedOpenRouterModel?.contextWindow
+      if (typeof ctx === 'number' && ctx > 0) return ctx
+      return 32000
+    }
+    if (apiConfig.provider === 'poe') {
+      return 128000
+    }
+    return 8192
+  }, [apiConfig.provider, findSelectedOpenRouterModel])
+
+  // Clamp maxTokens if needed when cap changes
+  useEffect(() => {
+    if (apiConfig.maxTokens > maxTokenCap) {
+      updateConfig({ maxTokens: maxTokenCap })
+    }
+  }, [maxTokenCap])
+
+  // Fetch OpenRouter model catalog
+  useEffect(() => {
+    const shouldFetch = apiConfig.provider === 'openrouter'
+    if (!shouldFetch) return
+
+    let isCancelled = false
+    async function fetchModels() {
+      try {
+        setIsLoadingModels(true)
+        const base = (apiConfig.baseUrl || 'https://openrouter.ai/api/v1').replace(/\/+$/, '')
+        const url = `${base}/models`
+        const headers: Record<string, string> = {}
+        if (apiConfig.apiKey) headers['Authorization'] = `Bearer ${apiConfig.apiKey}`
+        const res = await fetch(url, { headers })
+        if (!res.ok) throw new Error(`Failed to load models (${res.status})`)
+        const json = await res.json()
+        const list: OpenRouterModel[] = Array.isArray(json?.data) ? json.data : Array.isArray(json?.models) ? json.models : []
+        const mapped = list
+          .map((m) => {
+            const label = m.name || m.id || ''
+            const contextWindow = m.context_length || m.context_length_max || m.max_input_tokens || m.tokens || m.max_context
+            return m.id ? { id: m.id, label, contextWindow: typeof contextWindow === 'number' ? contextWindow : undefined } : null
+          })
+          .filter(Boolean) as Array<{ id: string; label: string; contextWindow?: number }>
+        // Deduplicate and sort: recommended first, then alphabetical
+        const unique = Array.from(new Map(mapped.map(m => [m.id, m])).values())
+        unique.sort((a, b) => a.label.localeCompare(b.label))
+        if (!isCancelled) setOpenRouterModels(unique)
+      } catch (err) {
+        console.error('OpenRouter models load failed:', err)
+        toast.error('Failed to load models from OpenRouter')
+      } finally {
+        if (!isCancelled) setIsLoadingModels(false)
+      }
+    }
+
+    fetchModels()
+    return () => { isCancelled = true }
+  }, [apiConfig.provider, apiConfig.baseUrl, apiConfig.apiKey])
 
   const testConnection = async () => {
     if (!apiConfig.apiKey.trim()) {
@@ -141,7 +243,7 @@ export default function ApiManager() {
   }
 
   const getCurrentProvider = () => {
-    return PROVIDERS.find(p => p.id === apiConfig.provider) || PROVIDERS[0]
+    return currentProvider
   }
 
   const formatCurrency = (amount: number) => {
@@ -155,6 +257,31 @@ export default function ApiManager() {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Never'
     return new Date(dateString).toLocaleString()
+  }
+
+  const formatTokens = (n: number) => {
+    if (n >= 1_000_000) return `${Math.round(n / 1000) / 1000}M`
+    if (n >= 1000) return `${Math.round(n / 100) / 10}K`
+    return String(n)
+  }
+
+  const applyRecommended = () => {
+    const cap = maxTokenCap
+    const recommendedTokens = Math.min(8192, cap)
+    updateConfig({ temperature: 0.4, topP: 0.9, maxTokens: recommendedTokens })
+    toast.success('Applied recommended settings')
+  }
+
+  const openModelPicker = () => {
+    if (apiConfig.provider === 'openrouter' && openRouterModels.length === 0 && !isLoadingModels) {
+      // trigger fetch via changing dependency if needed; effect handles auto
+    }
+    setIsModelPickerOpen(true)
+  }
+
+  const onSelectModel = (modelId: string) => {
+    updateConfig({ model: modelId })
+    setIsModelPickerOpen(false)
   }
 
   return (
@@ -274,23 +401,42 @@ export default function ApiManager() {
           <p className="text-sm text-muted-foreground">Model and generation tuning</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label htmlFor="model" className="text-sm font-medium mb-2 block">Model</label>
-            <select
-              id="model"
-              aria-label="Model"
-              value={apiConfig.model}
-              onChange={(e) => updateConfig({ model: e.target.value })}
-              className="w-full p-2 border rounded-md bg-background"
-            >
-              {getCurrentProvider().models.map(model => (
-                <option key={model} value={model}>{model}</option>
-              ))}
-            </select>
+          <div className="space-y-2">
+            <label htmlFor="model" className="text-sm font-medium mb-1 block">Model</label>
+            {apiConfig.provider === 'openrouter' ? (
+              <div className="flex gap-2">
+                <Input
+                  id="model"
+                  aria-label="Model"
+                  value={apiConfig.model}
+                  onChange={(e) => updateConfig({ model: e.target.value })}
+                  placeholder="Search or pick a model"
+                />
+                <Button onClick={openModelPicker} variant="outline">
+                  <Search className="h-4 w-4 mr-2" /> Browse
+                </Button>
+              </div>
+            ) : (
+              <Input
+                id="model"
+                aria-label="Model"
+                value={apiConfig.model}
+                onChange={(e) => updateConfig({ model: e.target.value })}
+                placeholder="Enter model/bot name"
+              />
+            )}
+            {apiConfig.provider === 'openrouter' && (
+              <p className="text-xs text-muted-foreground">
+                {isLoadingModels ? 'Loading models…' : openRouterModels.length > 0 ? `${openRouterModels.length} models loaded` : 'Click Browse to load model catalog'}
+              </p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="temperature" className="text-sm font-medium mb-2 block">Temperature ({apiConfig.temperature})</label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="temperature" className="text-sm font-medium mb-2 block">Temperature ({apiConfig.temperature})</label>
+              <Button size="sm" variant="secondary" onClick={applyRecommended}>Recommended</Button>
+            </div>
             <input
               id="temperature"
               aria-label="Temperature"
@@ -309,21 +455,45 @@ export default function ApiManager() {
           </div>
 
           <div>
-            <label htmlFor="maxTokens" className="text-sm font-medium mb-2 block">Max Tokens ({apiConfig.maxTokens})</label>
+            <label htmlFor="topP" className="text-sm font-medium mb-2 block">Top P ({Number.isFinite(apiConfig.topP) ? apiConfig.topP.toFixed(2) : '0.90'})</label>
+            <input
+              id="topP"
+              aria-label="Top P"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={Number.isFinite(apiConfig.topP) ? apiConfig.topP : 0.9}
+              onChange={(e) => updateConfig({ topP: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>Deterministic</span>
+              <span>Diverse</span>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="maxTokens" className="text-sm font-medium mb-2 block">Max Tokens ({apiConfig.maxTokens})</label>
+              {apiConfig.provider === 'openrouter' && findSelectedOpenRouterModel?.contextWindow && (
+                <span className="text-xs text-muted-foreground">Context window: {formatTokens(findSelectedOpenRouterModel.contextWindow)}</span>
+              )}
+            </div>
             <input
               id="maxTokens"
               aria-label="Max Tokens"
               type="range"
-              min="1000"
-              max="8000"
-              step="500"
+              min={512}
+              max={Math.max(1024, maxTokenCap)}
+              step={256}
               value={apiConfig.maxTokens}
               onChange={(e) => updateConfig({ maxTokens: parseInt(e.target.value) })}
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>1K</span>
-              <span>8K</span>
+              <span>{formatTokens(512)}</span>
+              <span>{formatTokens(Math.max(1024, maxTokenCap))}</span>
             </div>
           </div>
         </CardContent>
@@ -376,6 +546,39 @@ export default function ApiManager() {
           <strong>Security Notice:</strong> Your API keys are stored locally in your browser and never sent to external servers. Keep them safe and do not share.
         </AlertDescription>
       </Alert>
+
+      {/* OpenRouter Model Picker */}
+      <CommandDialog open={isModelPickerOpen} onOpenChange={setIsModelPickerOpen} title="Select a model" description="Search OpenRouter catalog">
+        <Command>
+          <CommandInput placeholder="Search models..." />
+          <CommandList>
+            <CommandEmpty>No models found.</CommandEmpty>
+            <CommandGroup heading="Recommended">
+              {openRouterModels
+                .filter(m => recommendedModelIds.some(id => m.id === id || m.label === id))
+                .map(m => (
+                  <CommandItem key={m.id} value={`${m.label} ${m.id}`} onSelect={() => onSelectModel(m.id)}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{m.label}</span>
+                      <span className="text-xs text-muted-foreground">{m.id}{m.contextWindow ? ` • ctx ${formatTokens(m.contextWindow)}` : ''}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="All Models">
+              {openRouterModels.map(m => (
+                <CommandItem key={m.id} value={`${m.label} ${m.id}`} onSelect={() => onSelectModel(m.id)}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{m.label}</span>
+                    <span className="text-xs text-muted-foreground">{m.id}{m.contextWindow ? ` • ctx ${formatTokens(m.contextWindow)}` : ''}</span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </CommandDialog>
     </div>
   )
 }
