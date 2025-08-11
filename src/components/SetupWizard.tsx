@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
@@ -23,6 +24,7 @@ import {
   Home
 } from 'lucide-react'
 import { toast } from 'sonner'
+import ApiManager from './ApiManager'
 
 interface FileWithPreview extends File {
   preview?: string
@@ -212,6 +214,22 @@ export default function SetupWizard({ onComplete, onCancel, darkMode, onToggleDa
             <Button onClick={onCancel} variant="ghost" size="sm" aria-label="Go home">
               <Home className="h-4 w-4" />
             </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-2" aria-label="Open settings">
+                  <Cog className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-3xl p-0">
+                <DialogHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-4 sm:p-6">
+                  <DialogTitle className="text-base sm:text-lg">Settings</DialogTitle>
+                  <DialogDescription>Configure API, models, and usage preferences</DialogDescription>
+                </DialogHeader>
+                <div className="p-4 sm:p-6">
+                  <ApiManager />
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button onClick={onToggleDarkMode} variant="ghost" size="sm">
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>

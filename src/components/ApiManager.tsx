@@ -10,6 +10,10 @@ import { Eye, EyeOff as EyeSlash, KeyRound as Key, AlertTriangle as WarningCircl
 import { toast } from 'sonner'
 import { useKV } from '@/lib/useKV'
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { FILTER_TAGS, TAG_STYLES, type ModelTag, inferTagsForOpenRouter } from '@/config/modelTags'
+
+// Remove inline tag types/logic (now imported)
 
 interface ApiConfig {
   provider: 'openrouter' | 'poe' | 'custom'
@@ -19,6 +23,8 @@ interface ApiConfig {
   temperature: number
   maxTokens: number
   topP: number
+  poeModelMode?: 'recommended' | 'custom'
+  modelTagFilter?: ModelTag[]
 }
 
 interface UsageStats {
@@ -57,6 +63,7 @@ export default function ApiManager() {
     temperature: 0.7,
     maxTokens: 4000,
     topP: 0.9,
+    poeModelMode: 'recommended',
   })
   
   const [usageStats, setUsageStats] = useKV<UsageStats>('usage-stats', {
@@ -101,9 +108,19 @@ export default function ApiManager() {
     }
   ]
 
+  const recommendedPoeModels = useMemo(() => [
+    'Claude-Opus-4.1',
+    'Claude-Sonnet-4',
+    'Gemini-2.5-Pro',
+    'GPT-5',
+    'Grok-4',
+    'gpt-4.1',
+  ], [])
+
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false)
   const [isLoadingModels, setIsLoadingModels] = useState(false)
-  const [openRouterModels, setOpenRouterModels] = useState<Array<{ id: string; label: string; contextWindow?: number }>>([])
+  const [openRouterModels, setOpenRouterModels] = useState<Array<{ id: string; label: string; contextWindow?: number; tags: ModelTag[] }>>([])
+  const [activeTagFilters, setActiveTagFilters] = useState<ModelTag[]>([])
 
   const updateConfig = (updates: Partial<ApiConfig>) => {
     setApiConfig(current => ({ ...current, ...updates }))
@@ -165,9 +182,10 @@ export default function ApiManager() {
           .map((m) => {
             const label = m.name || m.id || ''
             const contextWindow = m.context_length || m.context_length_max || m.max_input_tokens || m.tokens || m.max_context
-            return m.id ? { id: m.id, label, contextWindow: typeof contextWindow === 'number' ? contextWindow : undefined } : null
+            const tags = inferTagsForOpenRouter(m.id || label, typeof contextWindow === 'number' ? contextWindow : undefined)
+            return m.id ? { id: m.id, label, contextWindow: typeof contextWindow === 'number' ? contextWindow : undefined, tags } : null
           })
-          .filter(Boolean) as Array<{ id: string; label: string; contextWindow?: number }>
+          .filter(Boolean) as Array<{ id: string; label: string; contextWindow?: number; tags: ModelTag[] }>
         // Deduplicate and sort: recommended first, then alphabetical
         const unique = Array.from(new Map(mapped.map(m => [m.id, m])).values())
         unique.sort((a, b) => a.label.localeCompare(b.label))
@@ -184,6 +202,15 @@ export default function ApiManager() {
     return () => { isCancelled = true }
   }, [apiConfig.provider, apiConfig.baseUrl, apiConfig.apiKey])
 
+  const filteredOpenRouterModels = useMemo(() => {
+    if (activeTagFilters.length === 0) return openRouterModels
+    return openRouterModels.filter(m => activeTagFilters.every(tag => m.tags.includes(tag)))
+  }, [openRouterModels, activeTagFilters])
+
+  const toggleTagFilter = (tag: ModelTag) => {
+    setActiveTagFilters(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
+
   const testConnection = async () => {
     if (!apiConfig.apiKey.trim()) {
       toast.error('Please enter an API key first')
@@ -193,34 +220,81 @@ export default function ApiManager() {
     setIsTestingConnection(true)
     setConnectionStatus('idle')
 
+    const testPrompt = "Test connection. Reply with: Connection successful"
+
+    function clampTokens(n: number): number {
+      const cap = maxTokenCap
+      if (!Number.isFinite(n)) return Math.min(2048, cap)
+      return Math.max(256, Math.min(n, cap))
+    }
+
     try {
-      const sparkApi = (window as any)?.spark
-      if (!sparkApi) {
-        throw new Error('AI provider not initialized')
+      const base = (apiConfig.baseUrl || (apiConfig.provider === 'openrouter' ? 'https://openrouter.ai/api/v1' : apiConfig.provider === 'poe' ? 'https://api.poe.com/v1' : 'https://api.openai.com/v1')).replace(/\/+$/, '')
+      const url = `${base}/chat/completions`
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiConfig.apiKey}`,
+      }
+      // Nice-to-have for OpenRouter
+      if (apiConfig.provider === 'openrouter') {
+        headers['X-Title'] = 'MinutesMaster'
       }
 
-      // Test with a simple prompt
-      const testPrompt = sparkApi.llmPrompt`Test connection. Please respond with "Connection successful"`
-      const response = await sparkApi.llm(testPrompt, apiConfig.model, false)
-      
-      if (response && response.toLowerCase().includes('connection successful')) {
+      const body = {
+        model: apiConfig.model,
+        messages: [
+          { role: 'user', content: testPrompt }
+        ],
+        max_tokens: clampTokens(apiConfig.maxTokens),
+        temperature: apiConfig.temperature,
+        top_p: Number.isFinite(apiConfig.topP) ? apiConfig.topP : 0.9,
+        stream: false,
+      }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ''}`)
+      }
+
+      const json = await res.json().catch(() => ({}))
+      const content: string = json?.choices?.[0]?.message?.content || ''
+
+      if (content.toLowerCase().includes('connection successful')) {
         setConnectionStatus('success')
         toast.success('API connection successful!')
-        
-        // Update usage stats
+
+        const usage = json?.usage
+        const completionTokens = Number(usage?.completion_tokens) || 0
+        const promptTokens = Number(usage?.prompt_tokens) || 0
+        const totalTokens = Number(usage?.total_tokens) || (completionTokens + promptTokens)
+
         setUsageStats(current => ({
           ...current,
           totalRequests: current.totalRequests + 1,
-          lastUsed: new Date().toISOString()
+          totalTokens: current.totalTokens + (Number.isFinite(totalTokens) ? totalTokens : 0),
+          lastUsed: new Date().toISOString(),
         }))
       } else {
         setConnectionStatus('error')
         toast.error('API connection test failed')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Connection test error:', error)
       setConnectionStatus('error')
-      toast.error('Failed to connect to API')
+      const message = String(error?.message || error || 'Failed to connect to API')
+      // Common CORS hint
+      if (/cors/i.test(message)) {
+        toast.error('Failed due to CORS. Use dev server/https or a proxy, or try again.')
+      } else {
+        toast.error(message)
+      }
     } finally {
       setIsTestingConnection(false)
     }
@@ -416,6 +490,37 @@ export default function ApiManager() {
                   <Search className="h-4 w-4 mr-2" /> Browse
                 </Button>
               </div>
+            ) : apiConfig.provider === 'poe' ? (
+              <div className="space-y-2">
+                <select
+                  id="poe-model-select"
+                  aria-label="Poe model select"
+                  value={apiConfig.poeModelMode === 'custom' ? 'custom' : apiConfig.model}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val === 'custom') {
+                      updateConfig({ poeModelMode: 'custom' })
+                    } else {
+                      updateConfig({ poeModelMode: 'recommended', model: val })
+                    }
+                  }}
+                  className="w-full p-2 border rounded-md bg-background"
+                >
+                  {recommendedPoeModels.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                  <option value="custom">Custom</option>
+                </select>
+                {apiConfig.poeModelMode === 'custom' && (
+                  <Input
+                    id="model"
+                    aria-label="Custom Poe model"
+                    value={apiConfig.model}
+                    onChange={(e) => updateConfig({ model: e.target.value })}
+                    placeholder="Enter Poe bot/model name (e.g., Claude-Sonnet-4)"
+                  />
+                )}
+              </div>
             ) : (
               <Input
                 id="model"
@@ -435,7 +540,14 @@ export default function ApiManager() {
           <div>
             <div className="flex items-center justify-between">
               <label htmlFor="temperature" className="text-sm font-medium mb-2 block">Temperature ({apiConfig.temperature})</label>
-              <Button size="sm" variant="secondary" onClick={applyRecommended}>Recommended</Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="sm" variant="outline" onClick={applyRecommended} className="transition-all hover:bg-accent hover:text-accent-foreground active:scale-[0.98]">
+                    Recommended
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Apply tuned defaults for minutes generation</TooltipContent>
+              </Tooltip>
             </div>
             <input
               id="temperature"
@@ -551,27 +663,53 @@ export default function ApiManager() {
       <CommandDialog open={isModelPickerOpen} onOpenChange={setIsModelPickerOpen} title="Select a model" description="Search OpenRouter catalog">
         <Command>
           <CommandInput placeholder="Search models..." />
+          <div className="px-2 py-2 flex flex-wrap gap-2 border-b">
+            {FILTER_TAGS.map(tag => (
+              <Badge
+                key={tag}
+                variant={TAG_STYLES[tag].variant ?? 'outline'}
+                className={`cursor-pointer ${TAG_STYLES[tag].className ?? ''} ${activeTagFilters.includes(tag) ? 'ring-2 ring-white/70' : ''}`}
+                onClick={() => toggleTagFilter(tag)}
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
           <CommandList>
             <CommandEmpty>No models found.</CommandEmpty>
             <CommandGroup heading="Recommended">
-              {openRouterModels
+              {filteredOpenRouterModels
                 .filter(m => recommendedModelIds.some(id => m.id === id || m.label === id))
                 .map(m => (
                   <CommandItem key={m.id} value={`${m.label} ${m.id}`} onSelect={() => onSelectModel(m.id)}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{m.label}</span>
-                      <span className="text-xs text-muted-foreground">{m.id}{m.contextWindow ? ` • ctx ${formatTokens(m.contextWindow)}` : ''}</span>
+                    <div className="flex flex-col leading-tight w-full">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{m.label}</span>
+                        <div className="flex gap-1 flex-wrap">
+                          {m.tags.map(tag => (
+                            <Badge key={tag} variant={TAG_STYLES[tag].variant ?? 'outline'} className={TAG_STYLES[tag].className}>{tag}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">{m.id}{m.contextWindow ? ` • ctx ${formatTokens(m.contextWindow)}` : ''}</span>
                     </div>
                   </CommandItem>
                 ))}
             </CommandGroup>
             <CommandSeparator />
             <CommandGroup heading="All Models">
-              {openRouterModels.map(m => (
+              {filteredOpenRouterModels.map(m => (
                 <CommandItem key={m.id} value={`${m.label} ${m.id}`} onSelect={() => onSelectModel(m.id)}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{m.label}</span>
-                    <span className="text-xs text-muted-foreground">{m.id}{m.contextWindow ? ` • ctx ${formatTokens(m.contextWindow)}` : ''}</span>
+                  <div className="flex flex-col leading-tight w-full">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{m.label}</span>
+                      <div className="flex gap-1 flex-wrap">
+                        {m.tags.map(tag => (
+                          <Badge key={tag} variant={TAG_STYLES[tag].variant ?? 'outline'} className={TAG_STYLES[tag].className}>{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground">{m.id}{m.contextWindow ? ` • ctx ${formatTokens(m.contextWindow)}` : ''}</span>
                   </div>
                 </CommandItem>
               ))}
