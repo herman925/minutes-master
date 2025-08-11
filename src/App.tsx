@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@/lib/useKV'
 import { toast } from 'sonner'
+import { AIService, type GeneratedMinutes, type ApiConfig, type TemplateProfile } from '@/lib/aiService'
 import HomePage from '@/components/HomePage'
 import WorkspaceLayout from '@/components/WorkspaceLayout'
 import SetupWizard from '@/components/SetupWizard'
-import type { GeneratedMinutes } from '@/types'
 
 interface DictionaryEntry {
   id: string
@@ -36,13 +36,46 @@ function App() {
   const [dictionary, setDictionary] = useKV<DictionaryEntry[]>('user-dictionary', [])
   const [userInstructions, setUserInstructions] = useKV<UserInstruction[]>('user-instructions', [])
   const [sampleMinutes, setSampleMinutes] = useKV<SampleMinute[]>('sample-minutes', [])
+  const [templateProfiles, setTemplateProfiles] = useKV<TemplateProfile[]>('template-profiles', [])
+  const [selectedTemplateProfile, setSelectedTemplateProfile] = useKV<TemplateProfile | null>('selected-template-profile', null)
   const [darkMode, setDarkMode] = useKV<boolean>('dark-mode', false)
   const [meetingHistory, setMeetingHistory] = useKV<GeneratedMinutes[]>('meeting-history', [])
+  const [apiConfig, setApiConfig] = useKV<ApiConfig>('api-config', {
+    provider: 'openrouter',
+    apiKey: '',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'openai/gpt-4o',
+    temperature: 0.7,
+    maxTokens: 4000,
+    topP: 0.9,
+  })
+  
   const [currentView, setCurrentView] = useState<'home' | 'wizard' | 'workspace'>('home')
   const [transcript, setTranscript] = useState('')
   const [generatedMinutes, setGeneratedMinutes] = useState<GeneratedMinutes | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [progressStatus, setProgressStatus] = useState('')
+
+  // Initialize AI service when config changes
+  const [aiService, setAiService] = useState<AIService | null>(null)
+
+  useEffect(() => {
+    if (apiConfig.apiKey && apiConfig.model) {
+      const service = new AIService(apiConfig)
+      setAiService(service)
+      
+      // Make it available globally for backward compatibility
+      if (typeof window !== 'undefined' && window.spark) {
+        window.spark.aiService = service
+      }
+    } else {
+      setAiService(null)
+      if (typeof window !== 'undefined' && window.spark) {
+        window.spark.aiService = undefined
+      }
+    }
+  }, [apiConfig])
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -57,81 +90,52 @@ function App() {
     setDarkMode(prev => !prev)
   }
 
-  const generateMinutes = async () => {
+  const generateMinutes = async (meetingTitle?: string) => {
     if (!transcript.trim()) {
       toast.error('Please enter a transcript first')
       return
     }
 
+    if (!aiService) {
+      toast.error('Please configure your AI service in Settings first')
+      return
+    }
+
     setIsGenerating(true)
-    setProgress(10)
+    setProgress(0)
+    setProgressStatus('Initializing...')
 
     try {
-      // Build dictionary context - ensure arrays exist and are valid
-      const validDictionary = Array.isArray(dictionary) ? dictionary : []
-      const dictContext = validDictionary.length > 0 
-        ? `\n\nCustom terminology:\n${validDictionary.map(entry => `${entry.term}: ${entry.definition}${entry.context ? ` (${entry.context})` : ''}`).join('\n')}`
-        : ''
+      const minutes = await aiService.generateMinutes({
+        transcript,
+        dictionary: Array.isArray(dictionary) ? dictionary : [],
+        instructions: Array.isArray(userInstructions) ? userInstructions : [],
+        samples: Array.isArray(sampleMinutes) ? sampleMinutes : [],
+        templateProfile: selectedTemplateProfile || undefined,
+        meetingTitle,
+        onProgress: (progressValue: number, status: string) => {
+          setProgress(progressValue)
+          setProgressStatus(status)
+        }
+      })
 
-      // Build instructions context - ensure arrays exist and are valid
-      const validInstructions = Array.isArray(userInstructions) ? userInstructions : []
-      const instructionsContext = validInstructions.length > 0
-        ? `\n\nUser Instructions (follow these rules):\n${validInstructions
-            .sort((a, b) => {
-              const priorityOrder = { high: 3, medium: 2, low: 1 }
-              return priorityOrder[b.priority] - priorityOrder[a.priority]
-            })
-            .map(inst => `[${inst.category}] ${inst.title}: ${inst.instruction}`)
-            .join('\n')}`
-        : ''
-
-      // Build sample context from pool - ensure arrays exist and are valid
-      const validSamples = Array.isArray(sampleMinutes) ? sampleMinutes : []
-      const sampleContext = validSamples.length > 0
-        ? `\n\nStyle and format guidelines based on your sample library:\n${validSamples
-            .slice(0, 3) // Use top 3 samples
-            .map(sample => `${sample.name}:\n${sample.content.substring(0, 1000)}`)
-            .join('\n\n---\n\n')}`
-        : ''
-
-      setProgress(30)
-
-      const prompt = spark.llmPrompt`You are an expert meeting minutes generator. Transform the following transcript into professional meeting minutes that match the provided style guidelines.
-
-      Structure the output as a JSON object with these fields:
-      - title: Meeting title/subject
-      - date: Meeting date (if mentioned, otherwise use today's date)
-      - attendees: Array of participant names (extract from transcript speakers)
-      - agenda: Array of main topics discussed
-      - keyDecisions: Array of important decisions made
-      - actionItems: Array of objects with task, assignee, and dueDate
-      - nextSteps: Array of follow-up items
-
-      Make the minutes professional, concise, and well-organized. Follow the style and terminology from the provided samples and guidelines.${dictContext}${instructionsContext}${sampleContext}
-
-      Transcript:
-      ${transcript}`
-
-      setProgress(60)
-
-      const response = await spark.llm(prompt, 'gpt-4o', true)
-      setProgress(80)
-
-      const minutes = JSON.parse(response)
       setGeneratedMinutes(minutes)
       setMeetingHistory(prev => {
         const history = Array.isArray(prev) ? prev : []
         return [...history, minutes]
       })
-      setProgress(100)
 
       toast.success('Meeting minutes generated successfully!')
     } catch (error) {
       console.error('Generation error:', error)
-      toast.error('Failed to generate minutes. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      toast.error(`Failed to generate minutes: ${errorMessage}`)
+      setProgress(0)
+      setProgressStatus('')
     } finally {
       setIsGenerating(false)
       setProgress(0)
+      setProgressStatus('')
     }
   }
 
@@ -141,9 +145,13 @@ function App() {
     const content = `# ${generatedMinutes.title}
 
 **Date:** ${generatedMinutes.date}
+${generatedMinutes.duration ? `**Duration:** ${generatedMinutes.duration}\n` : ''}
 
 ## Attendees
 ${Array.isArray(generatedMinutes.attendees) ? generatedMinutes.attendees.map(name => `- ${name}`).join('\n') : ''}
+
+## Summary
+${generatedMinutes.summary || 'No summary provided.'}
 
 ## Agenda
 ${Array.isArray(generatedMinutes.agenda) ? generatedMinutes.agenda.map(item => `- ${item}`).join('\n') : ''}
@@ -156,7 +164,9 @@ ${Array.isArray(generatedMinutes.actionItems) ? generatedMinutes.actionItems.map
 
 ## Next Steps
 ${Array.isArray(generatedMinutes.nextSteps) ? generatedMinutes.nextSteps.map(step => `- ${step}`).join('\n') : ''}
-`
+
+---
+*Generated by MinutesMaster AI*`
 
     const blob = new Blob([content], { type: 'text/markdown' })
     const url = URL.createObjectURL(blob)
@@ -176,22 +186,53 @@ ${Array.isArray(generatedMinutes.nextSteps) ? generatedMinutes.nextSteps.map(ste
     instructions: string
   }) => {
     // Set transcript from wizard - if empty, add sample data
-    const sampleTranscript = wizardData.transcript || `Jane (00:02): Alright team, let's kick off the Q3 planning. First on the agenda is the product roadmap. John, can you give us an update?
+    const sampleTranscript = wizardData.transcript || `Jane (00:02): Alright team, let's kick off the Q3 planning meeting. First on the agenda is the product roadmap update. John, can you give us a status report?
 
-John (00:15): Thanks, Jane. We've finalized the specs for Project Phoenix. The key challenge is the integration with the new API. We'll need to allocate more resources to backend development. I've updated the JIRA ticket.
+John (00:15): Thanks, Jane. We've finalized the technical specifications for Project Phoenix. The main challenge we're facing is the integration with the new payment API. We'll need to allocate additional backend development resources to handle the complexity. I've created a detailed JIRA ticket outlining the requirements.
 
-Sarah (00:35): On the marketing side, we're preparing a campaign for the v2.1 launch. We need to define the target ICP and messaging. I suggest we form a small task force.
+Sarah (00:35): From the marketing perspective, we're preparing the launch campaign for v2.1. We need to clearly define our target customer profile and messaging strategy. I recommend forming a cross-functional task force to align our approach across sales and product teams.
 
-Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, please sync up and propose a plan by EOD Friday.`
+Jane (00:55): Excellent point, Sarah. Let's make that an action item. John and Sarah, please coordinate and present a comprehensive plan by end of day Friday. Also, let's schedule a follow-up session next week to review progress on all fronts.
+
+John (01:10): Understood. I'll also reach out to the DevOps team to discuss deployment strategies and timeline considerations.
+
+Sarah (01:18): Perfect. I'll draft the initial customer persona research and share it with the team by Thursday for review.
+
+Jane (01:25): Great work everyone. Any other items before we wrap up? If not, let's reconvene next Tuesday at the same time.`
 
     setTranscript(sampleTranscript)
     
-    // Add samples to sample pool
-    const newSamples = wizardData.samples.map(file => ({
+    // Add samples to sample pool (in a real app, we'd read file contents)
+    const newSamples: SampleMinute[] = wizardData.samples.map(file => ({
       id: Math.random().toString(),
       name: file.name,
-      content: `Sample content from ${file.name}`, // In real app, you'd read the file
-      tags: ['wizard-upload'],
+      content: `# Sample Meeting Minutes - ${file.name}
+
+**Date:** ${new Date().toISOString().slice(0, 10)}
+**Type:** General Meeting
+
+## Attendees
+- Team Lead
+- Project Manager  
+- Developer
+
+## Key Points
+- Reviewed project status
+- Discussed next milestones
+- Assigned action items
+
+## Decisions
+- Approved next phase
+- Resource allocation confirmed
+
+## Action Items
+- Complete technical review (Assignee: Developer, Due: Next week)
+- Update project timeline (Assignee: Project Manager, Due: Friday)
+
+## Next Steps
+- Follow up meeting scheduled
+- Progress review next week`, // Sample content for demo
+      tags: ['wizard-upload', 'general'],
       dateAdded: new Date().toISOString(),
       fileSize: file.size,
       meetingType: 'General',
@@ -205,12 +246,12 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
     
     // Add instructions if provided
     if (wizardData.instructions) {
-      const newInstruction = {
+      const newInstruction: UserInstruction = {
         id: Math.random().toString(),
         title: `Instructions for ${wizardData.meetingTitle}`,
         category: 'Meeting Specific',
         instruction: wizardData.instructions,
-        priority: 'high' as const
+        priority: 'high'
       }
       setUserInstructions(prev => {
         const currentInstructions = Array.isArray(prev) ? prev : []
@@ -218,13 +259,17 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
       })
     }
     
-    // Switch to workspace and auto-generate
+    // Switch to workspace
     setCurrentView('workspace')
     
-    // Auto-generate if we have content
-    setTimeout(() => {
-      generateMinutes()
-    }, 500)
+    // Auto-generate if we have an AI service configured
+    if (aiService) {
+      setTimeout(() => {
+        generateMinutes(wizardData.meetingTitle)
+      }, 500)
+    } else {
+      toast.warning('Please configure your AI service in Settings to generate minutes')
+    }
     
     toast.success(`Setup complete for "${wizardData.meetingTitle}"!`)
   }
@@ -261,19 +306,28 @@ Jane (00:55): Good point, Sarah. Let's make that an action item. John, Sarah, pl
           transcript={transcript}
           setTranscript={setTranscript}
           generatedMinutes={generatedMinutes}
-          onGenerate={generateMinutes}
+          onGenerate={() => generateMinutes()}
           isGenerating={isGenerating}
+          progress={progress}
+          progressStatus={progressStatus}
           dictionary={dictionary}
           setDictionary={setDictionary}
           userInstructions={userInstructions}
           setUserInstructions={setUserInstructions}
           sampleMinutes={sampleMinutes}
           setSampleMinutes={setSampleMinutes}
+          templateProfiles={templateProfiles}
+          setTemplateProfiles={setTemplateProfiles}
+          selectedTemplateProfile={selectedTemplateProfile}
+          setSelectedTemplateProfile={setSelectedTemplateProfile}
           onExport={exportMinutes}
           onResetToWizard={resetToHome}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
           meetingHistory={meetingHistory}
+          apiConfig={apiConfig}
+          setApiConfig={setApiConfig}
+          aiService={aiService}
         />
       )}
     </>
