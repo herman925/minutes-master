@@ -9,7 +9,7 @@ const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/minutes-master/',
+  base: process.env.NODE_ENV === 'production' ? '/minutes-master/' : '/',
   plugins: [
     react(),
     tailwindcss(),
