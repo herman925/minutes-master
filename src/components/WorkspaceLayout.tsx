@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Cog, Sparkles, Sun, Moon, Home } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
 import MinutesHistory from './MinutesHistory'
 import DictionaryManager from './DictionaryManager'
 import UserInstructions from './UserInstructions'
 import ApiManager from './ApiManager'
 import { toast } from 'sonner'
-import type { GeneratedMinutes } from '@/types'
+import type { GeneratedMinutes, ApiConfig } from '@/types'
+import type { AIService } from '@/lib/aiService'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 
@@ -45,6 +47,8 @@ interface WorkspaceLayoutProps {
   generatedMinutes: GeneratedMinutes | null
   onGenerate: () => void
   isGenerating: boolean
+  progress?: number
+  progressStatus?: string
   dictionary: DictionaryEntry[]
   setDictionary: (dictionary: DictionaryEntry[]) => void
   userInstructions: UserInstruction[]
@@ -56,6 +60,9 @@ interface WorkspaceLayoutProps {
   darkMode: boolean
   onToggleDarkMode: () => void
   meetingHistory: GeneratedMinutes[]
+  apiConfig: ApiConfig
+  setApiConfig: (config: ApiConfig) => void
+  aiService: AIService | null
 }
 
 export default function WorkspaceLayout({
@@ -64,6 +71,8 @@ export default function WorkspaceLayout({
   generatedMinutes,
   onGenerate,
   isGenerating,
+  progress = 0,
+  progressStatus = '',
   dictionary,
   setDictionary,
   userInstructions,
@@ -74,7 +83,10 @@ export default function WorkspaceLayout({
   onResetToWizard,
   darkMode,
   onToggleDarkMode,
-  meetingHistory
+  meetingHistory,
+  apiConfig,
+  setApiConfig,
+  aiService
 }: WorkspaceLayoutProps) {
   const [activeTab, setActiveTab] = useState('dictionary')
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false)
@@ -284,39 +296,94 @@ Content: ${base64.substring(0, 1000)}...`
           <h2 className="panel-header">Generated Minutes</h2>
           
           {generatedMinutes ? (
-            <div>
-              <h2>Attendees</h2>
-              <ul>
-                {Array.isArray(generatedMinutes.attendees) ? generatedMinutes.attendees.map((attendee, idx) => (
-                  <li key={idx}>{attendee}</li>
-                )) : <li>No attendees listed</li>}
-              </ul>
+            <div className="space-y-6">
+              {/* Meeting Header */}
+              <div className="border-b border-border pb-4">
+                <h1 className="text-xl font-bold">{generatedMinutes.title}</h1>
+                <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+                  <span><strong>Date:</strong> {generatedMinutes.date}</span>
+                  {generatedMinutes.duration && (
+                    <span><strong>Duration:</strong> {generatedMinutes.duration}</span>
+                  )}
+                </div>
+              </div>
 
-              <h2>Decisions</h2>
-              <ul>
-                {Array.isArray(generatedMinutes.keyDecisions) ? generatedMinutes.keyDecisions.map((decision, idx) => (
-                  <li key={idx}>{decision}</li>
-                )) : <li>No decisions recorded</li>}
-              </ul>
+              {/* Summary */}
+              {generatedMinutes.summary && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">Summary</h2>
+                  <p className="text-muted-foreground">{generatedMinutes.summary}</p>
+                </div>
+              )}
 
-              <h2>Action Items</h2>
-              <ul>
-                {Array.isArray(generatedMinutes.actionItems) ? generatedMinutes.actionItems.map((item, idx) => (
-                  <li key={idx}>
-                    <strong>{item.assignee}:</strong> {item.task} (Due: {item.dueDate})
-                  </li>
-                )) : <li>No action items</li>}
-              </ul>
+              {/* Attendees */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Attendees</h2>
+                <ul className="list-disc pl-5 space-y-1">
+                  {Array.isArray(generatedMinutes.attendees) && generatedMinutes.attendees.length > 0 
+                    ? generatedMinutes.attendees.map((attendee, idx) => (
+                        <li key={idx}>{attendee}</li>
+                      ))
+                    : <li className="text-muted-foreground">No attendees listed</li>
+                  }
+                </ul>
+              </div>
 
+              {/* Agenda */}
+              {Array.isArray(generatedMinutes.agenda) && generatedMinutes.agenda.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">Agenda</h2>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {generatedMinutes.agenda.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Key Decisions */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Key Decisions</h2>
+                <ul className="list-disc pl-5 space-y-1">
+                  {Array.isArray(generatedMinutes.keyDecisions) && generatedMinutes.keyDecisions.length > 0
+                    ? generatedMinutes.keyDecisions.map((decision, idx) => (
+                        <li key={idx}>{decision}</li>
+                      ))
+                    : <li className="text-muted-foreground">No decisions recorded</li>
+                  }
+                </ul>
+              </div>
+
+              {/* Action Items */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Action Items</h2>
+                {Array.isArray(generatedMinutes.actionItems) && generatedMinutes.actionItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {generatedMinutes.actionItems.map((item, idx) => (
+                      <div key={idx} className="bg-muted/50 p-3 rounded-md">
+                        <div className="font-medium">{item.task}</div>
+                        <div className="text-sm text-muted-foreground">
+                          <span className="font-medium">Assigned to:</span> {item.assignee} • 
+                          <span className="font-medium"> Due:</span> {item.dueDate}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No action items</p>
+                )}
+              </div>
+
+              {/* Next Steps */}
               {Array.isArray(generatedMinutes.nextSteps) && generatedMinutes.nextSteps.length > 0 && (
-                <>
-                  <h2>Next Steps</h2>
-                  <ul>
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">Next Steps</h2>
+                  <ul className="list-disc pl-5 space-y-1">
                     {generatedMinutes.nextSteps.map((step, idx) => (
                       <li key={idx}>{step}</li>
                     ))}
                   </ul>
-                </>
+                </div>
               )}
             </div>
           ) : (
@@ -346,20 +413,29 @@ Content: ${base64.substring(0, 1000)}...`
         {/* Right tools moved to sheets; no static right panel */}
 
         {/* Footer */}
-        <footer className="footer bg-card border-t border-border flex items-center justify-between px-6 py-2 text-sm">
-          <div className="flex items-center gap-4 text-muted-foreground">
-            <span>Status: {isGenerating ? 'Generating...' : 'Ready'}</span>
-            <span>AI Model: OpenRouter/GPT-4o</span>
-            <span>Cost: $0.018</span>
+        <footer className="footer bg-card border-t border-border px-6 py-2 text-sm">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-4 text-muted-foreground">
+              <span>Status: {isGenerating ? progressStatus || 'Generating...' : 'Ready'}</span>
+              <span>AI Service: {aiService ? `${apiConfig.provider}/${apiConfig.model}` : 'Not configured'}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              {isGenerating && (
+                <div className="flex items-center gap-2">
+                  <Progress value={progress} className="w-32 h-2" />
+                  <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
+                </div>
+              )}
+              <Button 
+                onClick={onGenerate} 
+                disabled={isGenerating || !transcript.trim() || !aiService}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                {isGenerating ? 'Generating...' : 'Generate Minutes'}
+              </Button>
+            </div>
           </div>
-          <Button 
-            onClick={onGenerate} 
-            disabled={isGenerating || !transcript.trim()}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-semibold flex items-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            {isGenerating ? 'Generating...' : 'Regenerate'}
-          </Button>
         </footer>
           </div>
         </ContextMenuTrigger>
