@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@/lib/useKV'
 import { toast } from 'sonner'
-import { AIService, type GeneratedMinutes, type ApiConfig } from '@/lib/aiService'
+import { AIService, type GeneratedMinutes, type ApiConfig, type TemplateProfile } from '@/lib/aiService'
 import HomePage from '@/components/HomePage'
 import WorkspaceLayout from '@/components/WorkspaceLayout'
 import SetupWizard from '@/components/SetupWizard'
@@ -36,6 +36,8 @@ function App() {
   const [dictionary, setDictionary] = useKV<DictionaryEntry[]>('user-dictionary', [])
   const [userInstructions, setUserInstructions] = useKV<UserInstruction[]>('user-instructions', [])
   const [sampleMinutes, setSampleMinutes] = useKV<SampleMinute[]>('sample-minutes', [])
+  const [templateProfiles, setTemplateProfiles] = useKV<TemplateProfile[]>('template-profiles', [])
+  const [selectedTemplateProfile, setSelectedTemplateProfile] = useKV<TemplateProfile | null>('selected-template-profile', null)
   const [darkMode, setDarkMode] = useKV<boolean>('dark-mode', false)
   const [meetingHistory, setMeetingHistory] = useKV<GeneratedMinutes[]>('meeting-history', [])
   const [apiConfig, setApiConfig] = useKV<ApiConfig>('api-config', {
@@ -109,6 +111,7 @@ function App() {
         dictionary: Array.isArray(dictionary) ? dictionary : [],
         instructions: Array.isArray(userInstructions) ? userInstructions : [],
         samples: Array.isArray(sampleMinutes) ? sampleMinutes : [],
+        templateProfile: selectedTemplateProfile || undefined,
         meetingTitle,
         onProgress: (progressValue: number, status: string) => {
           setProgress(progressValue)
@@ -313,6 +316,10 @@ Jane (01:25): Great work everyone. Any other items before we wrap up? If not, le
           setUserInstructions={setUserInstructions}
           sampleMinutes={sampleMinutes}
           setSampleMinutes={setSampleMinutes}
+          templateProfiles={templateProfiles}
+          setTemplateProfiles={setTemplateProfiles}
+          selectedTemplateProfile={selectedTemplateProfile}
+          setSelectedTemplateProfile={setSelectedTemplateProfile}
           onExport={exportMinutes}
           onResetToWizard={resetToHome}
           darkMode={darkMode}

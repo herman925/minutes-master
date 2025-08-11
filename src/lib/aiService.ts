@@ -3,60 +3,16 @@
  * Supports multiple AI providers: OpenRouter, OpenAI, Anthropic, and custom endpoints
  */
 
-export interface ApiConfig {
-  provider: 'openrouter' | 'poe' | 'custom'
-  apiKey: string
-  baseUrl?: string
-  model: string
-  temperature: number
-  maxTokens: number
-  topP: number
-}
-
-export interface GeneratedMinutes {
-  title: string
-  date: string
-  attendees: string[]
-  agenda: string[]
-  keyDecisions: string[]
-  actionItems: Array<{ task: string; assignee: string; dueDate: string }>
-  nextSteps: string[]
-  summary?: string
-  duration?: string
-}
-
-export interface DictionaryEntry {
-  id: string
-  term: string
-  definition: string
-  context?: string
-}
-
-export interface UserInstruction {
-  id: string
-  title: string
-  category: string
-  instruction: string
-  priority: 'low' | 'medium' | 'high'
-}
-
-export interface SampleMinute {
-  id: string
-  name: string
-  content: string
-  tags: string[]
-  meetingType?: string
-  organization?: string
-}
-
-export interface AIGenerationOptions {
-  transcript: string
-  dictionary?: DictionaryEntry[]
-  instructions?: UserInstruction[]
-  samples?: SampleMinute[]
-  meetingTitle?: string
-  onProgress?: (progress: number, status: string) => void
-}
+import type { 
+  ApiConfig, 
+  GeneratedMinutes, 
+  DictionaryEntry, 
+  UserInstruction, 
+  SampleMinute, 
+  TemplateStructure, 
+  TemplateProfile,
+  AIGenerationOptions
+} from '../types'
 
 export class AIService {
   private config: ApiConfig
@@ -76,7 +32,7 @@ export class AIService {
    * Main method to generate meeting minutes from transcript and context
    */
   async generateMinutes(options: AIGenerationOptions): Promise<GeneratedMinutes> {
-    const { transcript, dictionary = [], instructions = [], samples = [], meetingTitle, onProgress } = options
+    const { transcript, dictionary = [], instructions = [], samples = [], templateProfile, meetingTitle, onProgress } = options
 
     if (!transcript.trim()) {
       throw new Error('Transcript cannot be empty')
@@ -89,12 +45,12 @@ export class AIService {
     onProgress?.(10, 'Preparing context...')
 
     // Build comprehensive context for the AI
-    const context = this.buildContext(dictionary, instructions, samples)
+    const context = this.buildContext(dictionary, instructions, samples, templateProfile)
     
     onProgress?.(30, 'Structuring prompt...')
 
     // Create the structured prompt
-    const prompt = this.buildPrompt(transcript, context, meetingTitle)
+    const prompt = this.buildPrompt(transcript, context, meetingTitle, templateProfile)
 
     onProgress?.(50, 'Sending to AI...')
 
@@ -105,7 +61,7 @@ export class AIService {
       onProgress?.(80, 'Processing response...')
 
       // Parse and validate the response
-      const minutes = this.parseResponse(response)
+      const minutes = this.parseResponse(response, templateProfile)
       
       onProgress?.(100, 'Complete!')
 
@@ -117,10 +73,86 @@ export class AIService {
   }
 
   /**
+   * Analyzes a sample to create a template profile
+   */
+  async profileTemplate(sample: SampleMinute, onProgress?: (progress: number, status: string) => void): Promise<TemplateProfile> {
+    if (!this.config.apiKey.trim()) {
+      throw new Error('API key is required for template profiling')
+    }
+
+    onProgress?.(20, 'Analyzing template structure...')
+
+    const analysisPrompt = `Analyze the following meeting minutes sample to understand its structure and format. Provide a comprehensive template profile.
+
+## Analysis Requirements
+Return a valid JSON object with these exact fields:
+- "sections": Array of main section headings found (string[])
+- "fieldMappings": Object mapping standard fields to template fields (object)
+- "format": Overall format type - "structured", "narrative", or "mixed" (string)
+- "hasActionItems": Boolean indicating if action items are present
+- "hasAttendees": Boolean indicating if attendee list is present  
+- "hasAgenda": Boolean indicating if agenda items are present
+- "customFields": Array of unique/custom fields specific to this template (string[])
+- "analysis": Detailed text analysis of the template characteristics (string)
+
+## Sample to Analyze:
+${sample.content}
+
+Return only the JSON analysis object:`;
+
+    try {
+      onProgress?.(50, 'Processing analysis...')
+      
+      const response = await this.makeAPICall(analysisPrompt)
+      
+      onProgress?.(80, 'Creating profile...')
+      
+      const analysisResult = this.parseTemplateAnalysis(response)
+      
+      const profile: TemplateProfile = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: `Profile for ${sample.name}`,
+        structure: analysisResult,
+        confidence: this.calculateConfidence(analysisResult, sample.content),
+        analysis: analysisResult.analysis,
+        createdAt: new Date().toISOString()
+      }
+
+      onProgress?.(100, 'Profile complete!')
+      
+      return profile
+    } catch (error) {
+      onProgress?.(0, 'Failed to profile template')
+      throw new Error(`Template profiling failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  /**
    * Builds context from user's dictionary, instructions, and samples
    */
-  private buildContext(dictionary: DictionaryEntry[], instructions: UserInstruction[], samples: SampleMinute[]): string {
+  private buildContext(dictionary: DictionaryEntry[], instructions: UserInstruction[], samples: SampleMinute[], templateProfile?: TemplateProfile): string {
     let context = ''
+
+    // Add template structure context if available
+    if (templateProfile) {
+      context += '\n\n## Template Structure Guidelines\n'
+      context += `Follow this specific template structure (confidence: ${Math.round(templateProfile.confidence * 100)}%):\n`
+      context += `- Format Type: ${templateProfile.structure.format}\n`
+      context += `- Required Sections: ${templateProfile.structure.sections.join(', ')}\n`
+      
+      if (templateProfile.structure.fieldMappings && Object.keys(templateProfile.structure.fieldMappings).length > 0) {
+        context += '- Field Mappings:\n'
+        Object.entries(templateProfile.structure.fieldMappings).forEach(([standard, template]) => {
+          context += `  • ${standard} → ${template}\n`
+        })
+      }
+
+      if (templateProfile.structure.customFields.length > 0) {
+        context += `- Custom Fields: ${templateProfile.structure.customFields.join(', ')}\n`
+      }
+
+      context += `\nTemplate Analysis: ${templateProfile.analysis}\n`
+    }
 
     // Add dictionary context
     if (dictionary.length > 0) {
@@ -164,11 +196,8 @@ export class AIService {
   /**
    * Builds the structured prompt for AI generation
    */
-  private buildPrompt(transcript: string, context: string, meetingTitle?: string): string {
-    return `You are an expert meeting minutes generator. Transform the following transcript into professional, well-structured meeting minutes.
-
-## Output Requirements
-Return a valid JSON object with these exact fields:
+  private buildPrompt(transcript: string, context: string, meetingTitle?: string, templateProfile?: TemplateProfile): string {
+    let outputFormat = `Return a valid JSON object with these exact fields:
 - "title": Meeting title/subject (string)
 - "date": Meeting date in YYYY-MM-DD format (string)
 - "attendees": Array of participant names extracted from transcript (string[])
@@ -177,7 +206,30 @@ Return a valid JSON object with these exact fields:
 - "actionItems": Array of objects with "task", "assignee", and "dueDate" fields
 - "nextSteps": Array of follow-up items (string[])
 - "summary": Brief 2-3 sentence summary of the meeting (string)
-- "duration": Estimated meeting duration if determinable (string)
+- "duration": Estimated meeting duration if determinable (string)`
+
+    // Modify output format if template profile specifies custom structure
+    if (templateProfile) {
+      outputFormat += `\n\n## IMPORTANT: Template Structure Requirements
+- Follow the template format: ${templateProfile.structure.format}
+- Include these sections in order: ${templateProfile.structure.sections.join(', ')}`
+
+      if (templateProfile.structure.customFields.length > 0) {
+        outputFormat += `\n- Include custom fields: ${templateProfile.structure.customFields.join(', ')}`
+      }
+
+      if (Object.keys(templateProfile.structure.fieldMappings).length > 0) {
+        outputFormat += '\n- Use these field names instead of defaults:'
+        Object.entries(templateProfile.structure.fieldMappings).forEach(([standard, template]) => {
+          outputFormat += `\n  • ${standard} should be named "${template}"`
+        })
+      }
+    }
+
+    return `You are an expert meeting minutes generator. Transform the following transcript into professional, well-structured meeting minutes.
+
+## Output Requirements
+${outputFormat}
 
 ## Generation Guidelines
 1. **Accuracy**: Only include information explicitly mentioned in the transcript
@@ -185,6 +237,7 @@ Return a valid JSON object with these exact fields:
 3. **Clarity**: Make decisions and action items specific and actionable
 4. **Organization**: Group related topics logically
 5. **Completeness**: Capture all significant discussions and outcomes
+${templateProfile ? `6. **Template Compliance**: Strictly follow the analyzed template structure and format` : ''}
 
 ## Meeting Context
 ${meetingTitle ? `Meeting Title: ${meetingTitle}\n` : ''}
@@ -194,7 +247,7 @@ ${context}
 ## Transcript to Process
 ${transcript}
 
-Generate professional meeting minutes following the above requirements and return only the JSON object:`;
+Generate professional meeting minutes following the above requirements and return only the JSON object:`
   }
 
   /**
@@ -275,7 +328,7 @@ Generate professional meeting minutes following the above requirements and retur
   /**
    * Parses and validates the AI response
    */
-  private parseResponse(response: string): GeneratedMinutes {
+  private parseResponse(response: string, templateProfile?: TemplateProfile): GeneratedMinutes {
     try {
       // Clean response - sometimes AI adds markdown formatting
       let cleanResponse = response.trim()
@@ -287,6 +340,26 @@ Generate professional meeting minutes following the above requirements and retur
       }
 
       const parsed = JSON.parse(cleanResponse)
+
+      // Handle template-specific field mappings if available
+      if (templateProfile?.structure.fieldMappings) {
+        Object.entries(templateProfile.structure.fieldMappings).forEach(([standard, template]) => {
+          if (parsed[template] && !parsed[standard]) {
+            parsed[standard] = parsed[template]
+            delete parsed[template]
+          }
+        })
+      }
+
+      // Add custom fields from template if present
+      if (templateProfile?.structure.customFields) {
+        templateProfile.structure.customFields.forEach(field => {
+          if (parsed[field]) {
+            // Keep custom fields in the result
+            // They will be preserved in the GeneratedMinutes object
+          }
+        })
+      }
 
       // Validate required fields
       const required = ['title', 'date', 'attendees', 'agenda', 'keyDecisions', 'actionItems', 'nextSteps']
@@ -338,6 +411,70 @@ Generate professional meeting minutes following the above requirements and retur
       }
       throw new Error(`Failed to process AI response: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
+  }
+
+  /**
+   * Parses template analysis response
+   */
+  private parseTemplateAnalysis(response: string): TemplateStructure {
+    try {
+      let cleanResponse = response.trim()
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      }
+      if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+
+      const parsed = JSON.parse(cleanResponse)
+
+      // Validate required fields for template analysis
+      const required = ['sections', 'fieldMappings', 'format', 'hasActionItems', 'hasAttendees', 'hasAgenda', 'customFields', 'analysis']
+      for (const field of required) {
+        if (!(field in parsed)) {
+          throw new Error(`Missing required template analysis field: ${field}`)
+        }
+      }
+
+      // Ensure correct types
+      return {
+        sections: Array.isArray(parsed.sections) ? parsed.sections : [],
+        fieldMappings: parsed.fieldMappings || {},
+        format: ['structured', 'narrative', 'mixed'].includes(parsed.format) ? parsed.format : 'structured',
+        hasActionItems: Boolean(parsed.hasActionItems),
+        hasAttendees: Boolean(parsed.hasAttendees),
+        hasAgenda: Boolean(parsed.hasAgenda),
+        customFields: Array.isArray(parsed.customFields) ? parsed.customFields : [],
+        analysis: String(parsed.analysis || 'Template analysis completed')
+      }
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new Error('Template analysis returned invalid JSON format')
+      }
+      throw new Error(`Failed to parse template analysis: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  /**
+   * Calculates confidence score for template analysis
+   */
+  private calculateConfidence(structure: TemplateStructure, content: string): number {
+    let confidence = 0.5 // Base confidence
+
+    // Increase confidence based on found structure elements
+    if (structure.sections.length > 0) confidence += 0.2
+    if (structure.hasActionItems) confidence += 0.1
+    if (structure.hasAttendees) confidence += 0.1
+    if (structure.hasAgenda) confidence += 0.1
+    if (Object.keys(structure.fieldMappings).length > 0) confidence += 0.15
+    if (structure.customFields.length > 0) confidence += 0.1
+
+    // Adjust based on content length (more content = higher confidence)
+    const contentLength = content.length
+    if (contentLength > 2000) confidence += 0.1
+    else if (contentLength < 500) confidence -= 0.2
+
+    return Math.max(0, Math.min(1, confidence))
   }
 
   /**
@@ -400,5 +537,4 @@ Generate professional meeting minutes following the above requirements and retur
   }
 }
 
-// Export types for use in components
-export type { ApiConfig, GeneratedMinutes, DictionaryEntry, UserInstruction, SampleMinute, AIGenerationOptions }
+// Export the AIService class as the main export

@@ -45,3 +45,33 @@ export interface SampleMinute {
   meetingType?: string
   organization?: string
 }
+
+export interface TemplateStructure {
+  sections: string[]
+  fieldMappings: Record<string, string>
+  format: 'structured' | 'narrative' | 'mixed'
+  hasActionItems: boolean
+  hasAttendees: boolean
+  hasAgenda: boolean
+  customFields: string[]
+  analysis: string
+}
+
+export interface TemplateProfile {
+  id: string
+  name: string
+  structure: TemplateStructure
+  confidence: number
+  analysis: string
+  createdAt: string
+}
+
+export interface AIGenerationOptions {
+  transcript: string
+  dictionary?: DictionaryEntry[]
+  instructions?: UserInstruction[]
+  samples?: SampleMinute[]
+  templateProfile?: TemplateProfile
+  meetingTitle?: string
+  onProgress?: (progress: number, status: string) => void
+}

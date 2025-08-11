@@ -9,8 +9,9 @@ import MinutesHistory from './MinutesHistory'
 import DictionaryManager from './DictionaryManager'
 import UserInstructions from './UserInstructions'
 import ApiManager from './ApiManager'
+import TemplateManager from './TemplateManager'
 import { toast } from 'sonner'
-import type { GeneratedMinutes, ApiConfig } from '@/types'
+import type { GeneratedMinutes, ApiConfig, TemplateProfile } from '@/types'
 import type { AIService } from '@/lib/aiService'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
@@ -55,6 +56,10 @@ interface WorkspaceLayoutProps {
   setUserInstructions: (instructions: UserInstruction[]) => void
   sampleMinutes: SampleMinute[]
   setSampleMinutes: (samples: SampleMinute[]) => void
+  templateProfiles: TemplateProfile[]
+  setTemplateProfiles: (profiles: TemplateProfile[]) => void
+  selectedTemplateProfile: TemplateProfile | null
+  setSelectedTemplateProfile: (profile: TemplateProfile | null) => void
   onExport: () => void
   onResetToWizard: () => void
   darkMode: boolean
@@ -79,6 +84,10 @@ export default function WorkspaceLayout({
   setUserInstructions,
   sampleMinutes,
   setSampleMinutes,
+  templateProfiles,
+  setTemplateProfiles,
+  selectedTemplateProfile,
+  setSelectedTemplateProfile,
   onExport,
   onResetToWizard,
   darkMode,
@@ -91,6 +100,7 @@ export default function WorkspaceLayout({
   const [activeTab, setActiveTab] = useState('dictionary')
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false)
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false)
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false)
   const [isTranscriptUploading, setIsTranscriptUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -246,6 +256,13 @@ Content: ${base64.substring(0, 1000)}...`
                 onClick={() => setIsInstructionsOpen(true)}
               >
                 Instructions
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTemplatesOpen(true)}
+              >
+                Templates
               </Button>
             </div>
             <Dialog>
@@ -418,6 +435,9 @@ Content: ${base64.substring(0, 1000)}...`
             <div className="flex items-center gap-4 text-muted-foreground">
               <span>Status: {isGenerating ? progressStatus || 'Generating...' : 'Ready'}</span>
               <span>AI Service: {aiService ? `${apiConfig.provider}/${apiConfig.model}` : 'Not configured'}</span>
+              {selectedTemplateProfile && (
+                <span>Template: {selectedTemplateProfile.name} ({Math.round(selectedTemplateProfile.confidence * 100)}%)</span>
+              )}
             </div>
             <div className="flex items-center gap-4">
               {isGenerating && (
@@ -442,6 +462,7 @@ Content: ${base64.substring(0, 1000)}...`
         <ContextMenuContent>
           <ContextMenuItem onClick={() => setIsDictionaryOpen(true)}>Open Dictionary</ContextMenuItem>
           <ContextMenuItem onClick={() => setIsInstructionsOpen(true)}>Open Instructions</ContextMenuItem>
+          <ContextMenuItem onClick={() => setIsTemplatesOpen(true)}>Open Templates</ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
 
@@ -471,6 +492,26 @@ Content: ${base64.substring(0, 1000)}...`
             <UserInstructions
               instructions={userInstructions}
               setInstructions={setUserInstructions}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Templates Sheet */}
+      <Sheet open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
+        <SheetContent side="right" className="sm:max-w-6xl">
+          <SheetHeader>
+            <SheetTitle>Templates</SheetTitle>
+          </SheetHeader>
+          <div className="p-4">
+            <TemplateManager
+              samples={sampleMinutes}
+              setSamples={setSampleMinutes}
+              templateProfiles={templateProfiles}
+              setTemplateProfiles={setTemplateProfiles}
+              selectedTemplateProfile={selectedTemplateProfile}
+              setSelectedTemplateProfile={setSelectedTemplateProfile}
+              aiService={aiService}
             />
           </div>
         </SheetContent>
